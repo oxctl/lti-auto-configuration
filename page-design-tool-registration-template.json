@@ -1,0 +1,52 @@
+{
+    "id": "b4337e6c-abdc-4274-8922-2891565f74d3",
+    "lti": {
+        "registrationId": "LTI_REGISTRATION_ID",
+        "clientName": "LTI_TOOL_TITLE",
+        "clientId": "LTI_DEV_ID",
+        "clientSecret": "LTI_DEV_KEY",
+        "clientAuthenticationMethod": "client_secret_basic",
+        "authorizationGrantType": "implicit",
+        "redirectUri": "{baseUrl}/lti/login",
+        "scopes": [
+            "openid"
+        ],
+        "providerDetails": {
+            "authorizationUri": "https://sso.beta.canvaslms.com/api/lti/authorize_redirect",
+            "tokenUri": "https://sso.beta.canvaslms.com/login/oauth2/token",
+            "userInfoEndpoint": null,
+            "jwkSetUri": "https://sso.beta.canvaslms.com/api/lti/security/jwks",
+            "issuerUri": null,
+            "configurationMetadata": {}
+        }
+    },
+    "proxy": {
+        "registrationId": "LTI_REGISTRATION_ID",
+        "clientName": "LTI_TOOL_TITLE",
+        "clientId": "API_DEV_ID",
+        "clientSecret": "API_DEV_KEY",
+        "clientAuthenticationMethod": "client_secret_post",
+        "authorizationGrantType": "authorization_code",
+        "redirectUri": "{baseUrl}/login/oauth2/code/{registrationId}",
+        "scopes": [
+          "url:POST|/api/v1/courses/:course_id/files",
+          "url:POST|/api/v1/files/:id",
+          "url:PUT|/api/v1/courses/:course_id/usage_rights"
+        ],
+        "providerDetails": {
+            "authorizationUri": "CANVAS_URL/login/oauth2/auth",
+            "tokenUri": "CANVAS_URL/login/oauth2/token",
+            "userInfoEndpoint": null,
+            "jwkSetUri": null,
+            "issuerUri": null,
+            "configurationMetadata": {}
+        }
+    },
+    "origins": [
+        "https://main.page-design.pages.dev"
+    ],
+    "sign": true,
+    "secret": null,
+    "issuer": "LTI_SERVER_URL",
+    "nrpsAllowedRoles": []
+}
