@@ -1,0 +1,40 @@
+{
+  "tool_configuration": {
+    "settings": {
+      "public_jwk": {},
+      "title": "LTI_TOOL_TITLE",
+      "description": "Pick or upload a banner image to import and display on a page",
+      "target_link_uri": "https://main.page-design.pages.dev/banner-editor",
+      "oidc_initiation_url": "LTI_SERVER_URL/lti/login_initiation/LTI_REGISTRATION_ID",
+      "public_jwk_url": "LTI_SERVER_URL/.well-known/jwks.json",
+      "scopes": [],
+      "extensions": [
+        {
+          "platform": "canvas.instructure.com",
+          "settings": {
+            "placements": [
+              {
+                "placement": "editor_button",
+                "message_type": "LtiDeepLinkingRequest",
+                "icon_url": "https://main.page-design.pages.dev/banner-logo.svg",
+                "text": "LTI_TOOL_TITLE"
+              }
+            ]
+          },
+          "privacy_level": "public"
+        }
+      ],
+      "custom_fields": {
+        "canvas_course_id": "$Canvas.course.id",
+        "canvas_api_base_url": "$Canvas.api.baseUrl",
+        "canvas_user_prefers_high_contrast": "$Canvas.user.prefersHighContrast",
+        "com_instructure_brand_config_json_url": "$com.instructure.brandConfigJSON.url"
+      }
+    }
+  },
+  "developer_key": {
+    "name": "LTI_TOOL_TITLE",
+    "redirect_uris": "LTI_SERVER_URL/lti/login",
+    "scopes": []
+  }
+}

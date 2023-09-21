@@ -1,0 +1,12 @@
+{
+  "developer_key": {
+    "name": "LTI_TOOL_TITLE",
+    "require_scopes": true,
+    "redirect_uris" : "PROXY_SERVER_URL/login/oauth2/code/LTI_REGISTRATION_ID",
+    "scopes": [
+      "url:POST|/api/v1/courses/:course_id/files",
+      "url:POST|/api/v1/files/:id",
+      "url:PUT|/api/v1/courses/:course_id/usage_rights"
+    ]
+  }
+}
