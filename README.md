@@ -1,5 +1,5 @@
 # lti-auto-configuration
-This repository contains a set of scripts and utility tools to auto provising LTI tools to Canvas.
+This contains a set of scripts and utility tools to auto provising LTI tools to Canvas.
 
 We developers spend valuable time setting up LTI 1.3 tools in Canvas, we need to create at least one LTI developer key, in some cases API keys, and register the keys in an LTI auth server. Then add the tool to a subaccount to test it or let the testers play with it. And all of that per project and environment.
 
@@ -9,6 +9,12 @@ To test it locally, first, install the package globally in your system:
 
 ```
 npm i -g
+```
+
+Or you can also install it in your project:
+
+```
+npm i lti-auto-configuration --save-dev
 ```
 
 Then you can run the script using:
@@ -48,3 +54,12 @@ This command will run the following actions
  - DONE. Accept the JSON templates as parameters and move them to the repositories.
  - Release NPX tool in NPM to use it across repositories.
 
+# Releasing
+
+Releasing newer versions of the package requires to push the package to NPM:
+
+```
+npm version patch
+npm login
+npm publish
+```
