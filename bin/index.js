@@ -6,17 +6,18 @@ const JSONBigInt = require('json-bigint');
 const fs = require('fs');
 
 // Constant variables to be replaced
-const DEV_KEY = 'DEV_KEY';
-const LTI_TOOL_TITLE = 'LTI_TOOL_TITLE';
-const LTI_SERVER_URL = 'LTI_SERVER_URL';
-const PROXY_SERVER_URL = 'PROXY_SERVER_URL';
-const LTI_REGISTRATION_ID = 'LTI_REGISTRATION_ID';
-const CANVAS_URL = 'CANVAS_URL';
-const LTI_DEV_ID = 'LTI_DEV_ID';
-const LTI_DEV_KEY = 'LTI_DEV_KEY';
-const API_DEV_ID = 'API_DEV_ID';
-const API_DEV_KEY = 'API_DEV_KEY';
-const ACCOUNT_ID = 'ACCOUNT_ID';
+const DEV_KEY = '$DEV_KEY';
+const LTI_TOOL_TITLE = '$LTI_TOOL_TITLE';
+const LTI_TOOL_URL = '$LTI_TOOL_URL';
+const LTI_SERVER_URL = '$LTI_SERVER_URL';
+const PROXY_SERVER_URL = '$PROXY_SERVER_URL';
+const LTI_REGISTRATION_ID = '$LTI_REGISTRATION_ID';
+const CANVAS_URL = '$CANVAS_URL';
+const LTI_DEV_ID = '$LTI_DEV_ID';
+const LTI_DEV_KEY = '$LTI_DEV_KEY';
+const API_DEV_ID = '$API_DEV_ID';
+const API_DEV_KEY = '$API_DEV_KEY';
+const ACCOUNT_ID = '$ACCOUNT_ID';
 
 const CANVAS_DELETE_DEV_KEY_API_URL = '/api/v1/developer_keys/';
 const CANVAS_CREATE_LTI_KEY_API_URL = '/api/lti/accounts/1/developer_keys/tool_configuration';
@@ -31,37 +32,39 @@ const DELETE_COMMAND = "DELETE";
 
 program.name('index.js').description('Contains a set of CLI tools to auto-provision LTI tools to Canvas').version('1.0.0');
 program
-  .requiredOption('-c, --command <string>', 'The command, it supports create and delete.')
-  .requiredOption('-cs, --canvasserver <string>', 'The Canvas instance URL')
-  .requiredOption('-t, --token <string>', 'The Canvas token to perform API requests')
-  .requiredOption('-l, --ltiserver <string>', 'The LTI Auth Server URL')
-  .requiredOption('-lu, --ltiuser <string>', 'The LTI Auth Server User')
-  .requiredOption('-lp, --ltipassword <string>', 'The LTI Auth Server Password')
-  .option('-p, --proxyserver <string>', 'The Proxy Server URL')
-  .option('-tt, --tooltitle <string>', 'The LTI tool title')
-  .option('-tr, --toolregistrationid <string>', 'The tool registration id')
-  .option('-a, --accountid <string>', 'The testing account id where the tool will be visible')
-  .option('-f, --filetemplate <string>', 'The JSON template containing the LTI, API and tool registration templates. Check the README file for more information.')
-  .option('-d, --developerkey <string>', 'The developer key to be deleted')
+  .requiredOption('-c, --command <string>', 'The command, create and delete commands are supported.')
+  .requiredOption('-f, --filetemplate <string>', 'The JSON template with the configuration. Check the README file for more information.')
+  .option('-d, --developerkey <string>', 'The developer key to be deleted. REQUIRED for the delete command.')
   ;
 
 program.parse();
 const options = program.opts();
-
-const canvasUrl = options.canvasserver;
-const canvasToken = options.token;
-const canvasAccountId = options.accountid;
-const canvasDeveloperKeyToDelete = options.developerkey;
-
-const ltiServerURL = options.ltiserver;
-const proxyServerURL = options.proxyserver;
-const ltiUser = options.ltiuser;
-const ltiPassword = options.ltipassword;
-const ltiRegistrationId = options.toolregistrationid;
-const ltiToolTitle = options.tooltitle;
-
 const fileTemplate = options.filetemplate;
 const command = options.command;
+const canvasDeveloperKeyToDelete = options.developerkey;
+
+let jsonTemplate = fs.readFileSync(fileTemplate, 'utf8');
+const config = JSON.parse(jsonTemplate).config;
+
+const canvasUrl = config.canvas_url;
+const canvasToken = config.canvas_token;
+const canvasAccountId = config.lti_account_id;
+
+const ltiServerURL = config.tool_support_url;
+const proxyServerURL = config.proxy_server_url;
+const ltiUser = config.tool_support_username;
+const ltiPassword = config.tool_support_password;
+const ltiRegistrationId = config.lti_registration_id;
+const ltiToolTitle = config.lti_tool_title;
+const ltiToolUrl = config.lti_target_link_uri;
+
+// Replace the variables
+jsonTemplate = jsonTemplate.replaceAll(LTI_TOOL_TITLE, ltiToolTitle);
+jsonTemplate = jsonTemplate.replaceAll(LTI_TOOL_URL, ltiToolUrl);
+jsonTemplate = jsonTemplate.replaceAll(LTI_SERVER_URL, ltiServerURL);
+jsonTemplate = jsonTemplate.replaceAll(PROXY_SERVER_URL, proxyServerURL);
+jsonTemplate = jsonTemplate.replaceAll(LTI_REGISTRATION_ID, ltiRegistrationId);
+jsonTemplate = jsonTemplate.replaceAll(CANVAS_URL, canvasUrl);
 
 /****************************************************************************************/
 /**************************************Canvas********************************************/
@@ -236,21 +239,14 @@ if (CREATE_COMMAND !== command.toUpperCase() && DELETE_COMMAND !== command.toUpp
 
 if (CREATE_COMMAND === command.toUpperCase()) {
 
-  if (!proxyServerURL || !ltiRegistrationId || !ltiToolTitle || !canvasAccountId || !fileTemplate) {
-    console.error('The create command requires the Proxy, RegistrationId, toolTitle, filetemplate and AccountId arguments.');
+  if (!canvasUrl || !canvasToken || !ltiServerURL || !proxyServerURL || !ltiRegistrationId || !ltiToolTitle || !canvasAccountId || !ltiToolUrl) {
+    console.error('The create command requires more arguments, please check the config section of your json template file.');
     return;
   }
 
   (async () => {
     try {
 
-      // Open the template file and replace the variables
-      let jsonTemplate = fs.readFileSync(fileTemplate, 'utf8');
-      jsonTemplate = jsonTemplate.replaceAll(LTI_TOOL_TITLE, ltiToolTitle);
-      jsonTemplate = jsonTemplate.replaceAll(LTI_SERVER_URL, ltiServerURL);
-      jsonTemplate = jsonTemplate.replaceAll(PROXY_SERVER_URL, proxyServerURL);
-      jsonTemplate = jsonTemplate.replaceAll(LTI_REGISTRATION_ID, ltiRegistrationId);
-      jsonTemplate = jsonTemplate.replaceAll(CANVAS_URL, canvasUrl);
       const parsedJsonTemplate = JSON.parse(jsonTemplate);
       const ltiDeveloperkeyBody = parsedJsonTemplate.ltiKey;
       const apiDeveloperkeyBody = parsedJsonTemplate.apiKey;

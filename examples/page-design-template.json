@@ -1,13 +1,25 @@
 {
+  "config": {
+    "canvas_url": "https://your.phantastic.canvas.url",
+    "canvas_token": "A Canvas token with admin privileges",
+    "tool_support_url": "https://your.shiny.tool.support.url",
+    "tool_support_username": "A username for tool-support to make API requests",
+    "tool_support_password": "A password for tool-support to make API requests",
+    "proxy_server_url": "https://your.proxy.server.url",
+    "lti_tool_title": "A title for the LTI tool, this will be visible in the Canvas UI",
+    "lti_registration_id": "The registration id for the tool",
+    "lti_account_id": "The testing subaccount id to install the LTI tool after setting the developer keys",
+    "lti_target_link_uri": "The LTI tool url. Example: https://main.page-design.pages.dev/banner-editor"
+  },
   "ltiKey": {
     "tool_configuration": {
       "settings": {
         "public_jwk": {},
-        "title": "LTI_TOOL_TITLE",
+        "title": "$LTI_TOOL_TITLE",
         "description": "Pick or upload a banner image to import and display on a page",
-        "target_link_uri": "https://main.page-design.pages.dev/banner-editor",
-        "oidc_initiation_url": "LTI_SERVER_URL/lti/login_initiation/LTI_REGISTRATION_ID",
-        "public_jwk_url": "LTI_SERVER_URL/.well-known/jwks.json",
+        "target_link_uri": "$LTI_TOOL_URL",
+        "oidc_initiation_url": "$LTI_SERVER_URL/lti/login_initiation/$LTI_REGISTRATION_ID",
+        "public_jwk_url": "$LTI_SERVER_URL/.well-known/jwks.json",
         "scopes": [],
         "extensions": [
           {
@@ -18,7 +30,7 @@
                   "placement": "editor_button",
                   "message_type": "LtiDeepLinkingRequest",
                   "icon_url": "https://main.page-design.pages.dev/banner-logo.svg",
-                  "text": "LTI_TOOL_TITLE"
+                  "text": "$LTI_TOOL_TITLE"
                 }
               ]
             },
@@ -34,16 +46,16 @@
       }
     },
     "developer_key": {
-      "name": "LTI_TOOL_TITLE",
-      "redirect_uris": "LTI_SERVER_URL/lti/login",
+      "name": "$LTI_TOOL_TITLE",
+      "redirect_uris": "$LTI_SERVER_URL/lti/login",
       "scopes": []
     }
   },
   "apiKey" : {
     "developer_key": {
-    "name": "LTI_TOOL_TITLE",
+    "name": "$LTI_TOOL_TITLE",
     "require_scopes": true,
-    "redirect_uris" : "PROXY_SERVER_URL/login/oauth2/code/LTI_REGISTRATION_ID",
+    "redirect_uris" : "$PROXY_SERVER_URL/login/oauth2/code/$LTI_REGISTRATION_ID",
     "scopes": [
       "url:POST|/api/v1/courses/:course_id/files",
       "url:POST|/api/v1/files/:id",
@@ -54,10 +66,10 @@
   "toolReg": {
     "id": "b4337e6c-abdc-4274-8922-2891565f74d3",
     "lti": {
-        "registrationId": "LTI_REGISTRATION_ID",
-        "clientName": "LTI_TOOL_TITLE",
-        "clientId": "LTI_DEV_ID",
-        "clientSecret": "LTI_DEV_KEY",
+        "registrationId": "$LTI_REGISTRATION_ID",
+        "clientName": "$LTI_TOOL_TITLE",
+        "clientId": "$LTI_DEV_ID",
+        "clientSecret": "$LTI_DEV_KEY",
         "clientAuthenticationMethod": "client_secret_basic",
         "authorizationGrantType": "implicit",
         "redirectUri": "{baseUrl}/lti/login",
@@ -74,10 +86,10 @@
         }
     },
     "proxy": {
-        "registrationId": "LTI_REGISTRATION_ID",
-        "clientName": "LTI_TOOL_TITLE",
-        "clientId": "API_DEV_ID",
-        "clientSecret": "API_DEV_KEY",
+        "registrationId": "$LTI_REGISTRATION_ID",
+        "clientName": "$LTI_TOOL_TITLE",
+        "clientId": "$API_DEV_ID",
+        "clientSecret": "$API_DEV_KEY",
         "clientAuthenticationMethod": "client_secret_post",
         "authorizationGrantType": "authorization_code",
         "redirectUri": "{baseUrl}/login/oauth2/code/{registrationId}",
@@ -87,8 +99,8 @@
           "url:PUT|/api/v1/courses/:course_id/usage_rights"
         ],
         "providerDetails": {
-            "authorizationUri": "CANVAS_URL/login/oauth2/auth",
-            "tokenUri": "CANVAS_URL/login/oauth2/token",
+            "authorizationUri": "$CANVAS_URL/login/oauth2/auth",
+            "tokenUri": "$CANVAS_URL/login/oauth2/token",
             "userInfoEndpoint": null,
             "jwkSetUri": null,
             "issuerUri": null,
@@ -96,11 +108,11 @@
         }
     },
     "origins": [
-        "https://main.page-design.pages.dev"
+        "$LTI_TOOL_URL"
     ],
     "sign": true,
     "secret": null,
-    "issuer": "LTI_SERVER_URL",
+    "issuer": "$LTI_SERVER_URL",
     "nrpsAllowedRoles": []
   }
 }
