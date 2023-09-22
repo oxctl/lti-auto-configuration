@@ -18,9 +18,11 @@ npx lti-auto-configuration -h
 
 The -h flag will make the tool to provide information about what commands are supported and what parameters are required.
 
+IMPORTANT: The script requires a template file with some configuration, you have an example for page-design in the examples folder, customize the configuration template according to your needs putting attention to the required permissions in the scope.
+
 Example of the create command:
 ```
-npx lti-auto-configuration -c create -cs https://your.phantastic.canvas.url -t your_admin_token -l https://the.shiny.lti.server.url -lu your_lti_server_username -lp your_lti_server_password -p https://your.shiny.proxy.server.url -tt "The tool name, AB#12345" -tr "your-custom-registration-id" -a your_testing_subaccount -f template.json
+npx lti-auto-configuration -c create -f ./examples/page-design-template.json
 ```
 This command will run the following actions
  1. Creates an LTI developer key.
@@ -29,11 +31,9 @@ This command will run the following actions
  4. Register both keys in the LTI Auth Server.
  5. Adds the external tool to the testing subaccount using the LTI develoker Key from step 1.
 
-IMPORTANT: The create command requires a template file, you have an example for page-design in the folder, customize the template according to your needs putting attention to the required permissions in the scope.
-
 Example of the delete command:
 ```
-npx lti-auto-configuration -c delete -cs https://your.phantastic.canvas.url -t your_admin_token -l https://the.shiny.lti.server.url -lu your_lti_server_username -lp your_lti_server_password -p https://your.shiny.proxy.server.url -d 122010000000000200
+npx lti-auto-configuration -c delete -f ./examples/page-design-template.json -d 122010000000000200
 ```
 This command will run the following actions
  1. Deletes the LTI developer key 122010000000000200.
@@ -42,8 +42,8 @@ This command will run the following actions
  4. Deletes the LTI registration from the LTI Auth Server.
 
 # TODO
- - Many things to do and improve, this is just the first version with many pending stuff.
- - This is only working for page-design and the banner feature.
+ - DONE Many things to do and improve, this is just the first version with many pending stuff.
+ - DONE. This is only working for page-design and the banner feature.
  - DONE. Accept the tool URL as parameter because right now page-design is hardcoded.
  - DONE. Accept the JSON templates as parameters and move them to the repositories.
  - Release NPX tool in NPM to use it across repositories.
