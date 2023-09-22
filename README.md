@@ -20,7 +20,7 @@ The -h flag will make the tool to provide information about what commands are su
 
 Example of the create command:
 ```
-npx lti-auto-configuration -c create -cs https://your.phantastic.canvas.url -t your_admin_token -l https://the.shiny.lti.server.url -lu your_lti_server_username -lp your_lti_server_password -p https://your.shiny.proxy.server.url -tt "The tool name, AB#12345" -tr "your-custom-registration-id" -a your_testing_subaccount
+npx lti-auto-configuration -c create -cs https://your.phantastic.canvas.url -t your_admin_token -l https://the.shiny.lti.server.url -lu your_lti_server_username -lp your_lti_server_password -p https://your.shiny.proxy.server.url -tt "The tool name, AB#12345" -tr "your-custom-registration-id" -a your_testing_subaccount -f template.json
 ```
 This command will run the following actions
  1. Creates an LTI developer key.
@@ -28,6 +28,8 @@ This command will run the following actions
  3. Enables both developer keys.
  4. Register both keys in the LTI Auth Server.
  5. Adds the external tool to the testing subaccount using the LTI develoker Key from step 1.
+
+IMPORTANT: The create command requires a template file, you have an example for page-design in the folder, customize the template according to your needs putting attention to the required permissions in the scope.
 
 Example of the delete command:
 ```
@@ -42,7 +44,7 @@ This command will run the following actions
 # TODO
  - Many things to do and improve, this is just the first version with many pending stuff.
  - This is only working for page-design and the banner feature.
- - Accept the tool URL as parameter because right now page-design is hardcoded.
- - Accept the JSON templates as parameters and move them to the repositories.
+ - DONE. Accept the tool URL as parameter because right now page-design is hardcoded.
+ - DONE. Accept the JSON templates as parameters and move them to the repositories.
  - Release NPX tool in NPM to use it across repositories.
 

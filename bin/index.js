@@ -18,9 +18,6 @@ const API_DEV_ID = 'API_DEV_ID';
 const API_DEV_KEY = 'API_DEV_KEY';
 const ACCOUNT_ID = 'ACCOUNT_ID';
 
-const PAGE_DESIGN_LTI_KEY_TEMPLATE = 'page-design-ltikey-template.json';
-const PAGE_DESIGN_API_KEY_TEMPLATE = 'page-design-apikey-template.json';
-const PAGE_DESIGN_TOOL_REGISTRATION_TEMPLATE = 'page-design-tool-registration-template.json';
 const CANVAS_DELETE_DEV_KEY_API_URL = '/api/v1/developer_keys/';
 const CANVAS_CREATE_LTI_KEY_API_URL = '/api/lti/accounts/1/developer_keys/tool_configuration';
 const CANVAS_CREATE_API_KEY_API_URL = '/api/v1/accounts/1/developer_keys'
@@ -44,6 +41,7 @@ program
   .option('-tt, --tooltitle <string>', 'The LTI tool title')
   .option('-tr, --toolregistrationid <string>', 'The tool registration id')
   .option('-a, --accountid <string>', 'The testing account id where the tool will be visible')
+  .option('-f, --filetemplate <string>', 'The JSON template containing the LTI, API and tool registration templates. Check the README file for more information.')
   .option('-d, --developerkey <string>', 'The developer key to be deleted')
   ;
 
@@ -62,6 +60,7 @@ const ltiPassword = options.ltipassword;
 const ltiRegistrationId = options.toolregistrationid;
 const ltiToolTitle = options.tooltitle;
 
+const fileTemplate = options.filetemplate;
 const command = options.command;
 
 /****************************************************************************************/
@@ -98,14 +97,7 @@ const deleteDeveloperKeyById = async (developerKeyId) => {
 }
 
 // Method to create an LTI developer key
-const createLtiDeveloperKey = async () => {
-
-  // Open the template file and replace the variables
-  const pageDesignTemplate = fs.readFileSync(PAGE_DESIGN_LTI_KEY_TEMPLATE, 'utf8');
-  let pageDesignKeyJson = pageDesignTemplate.replaceAll(LTI_TOOL_TITLE, ltiToolTitle);
-  pageDesignKeyJson = pageDesignKeyJson.replaceAll(LTI_SERVER_URL, ltiServerURL);
-  pageDesignKeyJson = pageDesignKeyJson.replaceAll(LTI_REGISTRATION_ID, ltiRegistrationId);
-  const developerKeyBody = JSON.parse(pageDesignKeyJson);
+const createLtiDeveloperKey = async (developerKeyBody) => {
 
   // Create the developer key
   return await axios.post(`${canvasUrl}${CANVAS_CREATE_LTI_KEY_API_URL}`, developerKeyBody, REQUEST_CONFIG)
@@ -120,14 +112,7 @@ const createLtiDeveloperKey = async () => {
 }
 
 // Method to create an API developer key
-const createApiDeveloperKey = async () => {
-
-  // Open the template file and replace the variables
-  const pageDesignTemplate = fs.readFileSync(PAGE_DESIGN_API_KEY_TEMPLATE, 'utf8');
-  let pageDesignKeyJson = pageDesignTemplate.replaceAll(LTI_TOOL_TITLE, ltiToolTitle);
-  pageDesignKeyJson = pageDesignKeyJson.replaceAll(PROXY_SERVER_URL, proxyServerURL);
-  pageDesignKeyJson = pageDesignKeyJson.replaceAll(LTI_REGISTRATION_ID, ltiRegistrationId);
-  const developerKeyBody = JSON.parse(pageDesignKeyJson);
+const createApiDeveloperKey = async (developerKeyBody) => {
 
   // Create the developer key
   return await axios.post(`${canvasUrl}${CANVAS_CREATE_API_KEY_API_URL}`, developerKeyBody, REQUEST_CONFIG)
@@ -196,23 +181,10 @@ const AUTH_CONFIG = {
 }
 
 // Method to create an LTI tool registration in tool-support
-const createLtiToolRegistration = async (ltiDevId, ltiDevApiKey, apiDevId, apiDevApiKey) => {
-
-  // Open the template file and replace the variables
-  const pageDesignTemplate = fs.readFileSync(PAGE_DESIGN_TOOL_REGISTRATION_TEMPLATE, 'utf8');
-  let pageDesignKeyJson = pageDesignTemplate.replaceAll(LTI_TOOL_TITLE, ltiToolTitle);
-  pageDesignKeyJson = pageDesignKeyJson.replaceAll(LTI_SERVER_URL, ltiServerURL);
-  pageDesignKeyJson = pageDesignKeyJson.replaceAll(LTI_REGISTRATION_ID, ltiRegistrationId);
-  pageDesignKeyJson = pageDesignKeyJson.replaceAll(CANVAS_URL, canvasUrl);
-  pageDesignKeyJson = pageDesignKeyJson.replaceAll(LTI_DEV_ID, ltiDevId);
-  pageDesignKeyJson = pageDesignKeyJson.replaceAll(LTI_DEV_KEY, ltiDevApiKey);
-  pageDesignKeyJson = pageDesignKeyJson.replaceAll(API_DEV_ID, apiDevId);
-  pageDesignKeyJson = pageDesignKeyJson.replaceAll(API_DEV_KEY, apiDevApiKey);
-
-  const developerKeyBody = JSON.parse(pageDesignKeyJson);
+const createLtiToolRegistration = async (ltiRegistrationBody) => {
 
   // Create the tool registration
-  return await axios.post(`${ltiServerURL}${TOOL_SUPPORT_CREATE_API_URL}`, developerKeyBody, AUTH_CONFIG)
+  return await axios.post(`${ltiServerURL}${TOOL_SUPPORT_CREATE_API_URL}`, ltiRegistrationBody, AUTH_CONFIG)
     .then(function (response) {
       return response.data;
     })
@@ -264,20 +236,31 @@ if (CREATE_COMMAND !== command.toUpperCase() && DELETE_COMMAND !== command.toUpp
 
 if (CREATE_COMMAND === command.toUpperCase()) {
 
-  if (!proxyServerURL || !ltiRegistrationId || !ltiToolTitle || !canvasAccountId) {
-    console.error('The create command requires the Proxy, RegistrationId, toolTitle and AccountId arguments.');
+  if (!proxyServerURL || !ltiRegistrationId || !ltiToolTitle || !canvasAccountId || !fileTemplate) {
+    console.error('The create command requires the Proxy, RegistrationId, toolTitle, filetemplate and AccountId arguments.');
     return;
   }
 
   (async () => {
     try {
 
-      const createdLtiDevKey = await createLtiDeveloperKey();
+      // Open the template file and replace the variables
+      let jsonTemplate = fs.readFileSync(fileTemplate, 'utf8');
+      jsonTemplate = jsonTemplate.replaceAll(LTI_TOOL_TITLE, ltiToolTitle);
+      jsonTemplate = jsonTemplate.replaceAll(LTI_SERVER_URL, ltiServerURL);
+      jsonTemplate = jsonTemplate.replaceAll(PROXY_SERVER_URL, proxyServerURL);
+      jsonTemplate = jsonTemplate.replaceAll(LTI_REGISTRATION_ID, ltiRegistrationId);
+      jsonTemplate = jsonTemplate.replaceAll(CANVAS_URL, canvasUrl);
+      const parsedJsonTemplate = JSON.parse(jsonTemplate);
+      const ltiDeveloperkeyBody = parsedJsonTemplate.ltiKey;
+      const apiDeveloperkeyBody = parsedJsonTemplate.apiKey;
+
+      const createdLtiDevKey = await createLtiDeveloperKey(ltiDeveloperkeyBody);
       const ltiDevId = createdLtiDevKey.developer_key.id.toFixed();
       const ltiDevApiKey = createdLtiDevKey.developer_key.api_key;
       console.log(`LTI developer key created with id ${ltiDevId}`);
 
-      const createdApiDevKey = await createApiDeveloperKey();
+      const createdApiDevKey = await createApiDeveloperKey(apiDeveloperkeyBody);
       const apiDevId = createdApiDevKey.id.toFixed();
       const apiDevApiKey = createdApiDevKey.api_key;
       console.log(`API developer key created with id ${apiDevId}`);
@@ -288,8 +271,15 @@ if (CREATE_COMMAND === command.toUpperCase()) {
       await enableDeveloperKey(apiDevId);
       console.log(`API developer key enabled with id ${apiDevId}`);
 
+      // Replace the developer keys
+      jsonTemplate = jsonTemplate.replaceAll(LTI_DEV_ID, ltiDevId);
+      jsonTemplate = jsonTemplate.replaceAll(LTI_DEV_KEY, ltiDevApiKey);
+      jsonTemplate = jsonTemplate.replaceAll(API_DEV_ID, apiDevId);
+      jsonTemplate = jsonTemplate.replaceAll(API_DEV_KEY, apiDevApiKey);
+
+      const ltiRegistrationBody = JSON.parse(jsonTemplate).toolReg;
       // Once the developer keys are enabled we can create the registrations in the LTI auth server.
-      const ltiToolRegistration = await createLtiToolRegistration(ltiDevId, ltiDevApiKey, apiDevId, apiDevApiKey);
+      const ltiToolRegistration = await createLtiToolRegistration(ltiRegistrationBody);
       const ltiToolRegistrationId = ltiToolRegistration.id;
       console.log(`LTI tool registration created with id ${ltiToolRegistrationId}`);
 
