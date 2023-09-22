@@ -9,7 +9,7 @@
     "lti_tool_title": "A title for the LTI tool, this will be visible in the Canvas UI",
     "lti_registration_id": "The registration id for the tool",
     "lti_account_id": "The testing subaccount id to install the LTI tool after setting the developer keys",
-    "lti_target_link_uri": "The LTI tool url. Example: https://main.page-design.pages.dev/banner-editor"
+    "lti_target_link_uri": "The LTI tool url. Example: https://your.lti.tool.url"
   },
   "ltiKey": {
     "tool_configuration": {
@@ -29,7 +29,7 @@
                 {
                   "placement": "editor_button",
                   "message_type": "LtiDeepLinkingRequest",
-                  "icon_url": "https://main.page-design.pages.dev/banner-logo.svg",
+                  "icon_url": "https://your.lti.tool.url/banner-logo.svg",
                   "text": "$LTI_TOOL_TITLE"
                 }
               ]
