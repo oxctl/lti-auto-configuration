@@ -24,11 +24,11 @@ npx lti-auto-configuration -h
 
 The -h flag will make the tool to provide information about what commands are supported and what parameters are required.
 
-IMPORTANT: The script requires a template file with some configuration, you have an example for page-design in the examples folder, customize the configuration template according to your needs putting attention to the required permissions in the scope.
+IMPORTANT: The script requires the configuration provided by template files, you have examples for page-design in the examples folder, customize the configuration templates according to your needs putting attention to the required permissions in the scope.
 
 Example of the create command:
 ```
-npx lti-auto-configuration -c create -f ./examples/page-design-template.json
+npx lti-auto-configuration -c create -t ./examples/page-design-template.json -s ./examples/setup-template.json -ss ./examples/secrets-template.json
 ```
 This command will run the following actions
  1. Creates an LTI developer key.
@@ -39,7 +39,7 @@ This command will run the following actions
 
 Example of the delete command:
 ```
-npx lti-auto-configuration -c delete -f ./examples/page-design-template.json -d 122010000000000200
+npx lti-auto-configuration -c delete -t ./examples/page-design-template.json -s ./examples/setup-template.json -ss ./examples/secrets-template.json -d 122010000000000200
 ```
 This command will run the following actions
  1. Deletes the LTI developer key 122010000000000200.
