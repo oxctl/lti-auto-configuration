@@ -33,27 +33,33 @@ const DELETE_COMMAND = "DELETE";
 program.name('index.js').description('Contains a set of CLI tools to auto-provision LTI tools to Canvas').version('1.0.0');
 program
   .requiredOption('-c, --command <string>', 'The command, create and delete commands are supported.')
-  .requiredOption('-f, --filetemplate <string>', 'The JSON template with the configuration. Check the README file for more information.')
+  .requiredOption('-t, --templatefile <string>', 'The JSON template with the configuration. Check the README file for more information.')
+  .requiredOption('-s, --setupfile <string>', 'The JSON template with the tool setup. Check the README file for more information.')
+  .requiredOption('-ss, --secretsfile <string>', 'The JSON template with the secrets. Check the README file for more information.')
   .option('-d, --developerkey <string>', 'The developer key to be deleted. REQUIRED for the delete command.')
   ;
 
 program.parse();
 const options = program.opts();
-const fileTemplate = options.filetemplate;
+const templateFile = options.templatefile;
+const setupFile = options.setupfile;
+const secretsFile = options.secretsfile;
 const command = options.command;
 const canvasDeveloperKeyToDelete = options.developerkey;
 
-let jsonTemplate = fs.readFileSync(fileTemplate, 'utf8');
+let jsonTemplate = fs.readFileSync(templateFile, 'utf8');
 const config = JSON.parse(jsonTemplate).config;
+const setup = JSON.parse(fs.readFileSync(setupFile, 'utf8')).setup;
+const secrets = JSON.parse(fs.readFileSync(secretsFile, 'utf8')).secrets;
 
-const canvasUrl = config.canvas_url;
-const canvasToken = config.canvas_token;
+const canvasUrl = setup.canvas_url;
+const canvasToken = secrets.canvas_token;
 const canvasAccountId = config.lti_account_id;
 
-const ltiServerURL = config.tool_support_url;
-const proxyServerURL = config.proxy_server_url;
-const ltiUser = config.tool_support_username;
-const ltiPassword = config.tool_support_password;
+const ltiServerURL = setup.tool_support_url;
+const proxyServerURL = setup.proxy_server_url;
+const ltiUser = secrets.tool_support_username;
+const ltiPassword = secrets.tool_support_password;
 const ltiRegistrationId = config.lti_registration_id;
 const ltiToolTitle = config.lti_tool_title;
 const ltiToolUrl = config.lti_target_link_uri;

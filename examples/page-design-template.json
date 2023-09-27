@@ -1,15 +1,9 @@
 {
   "config": {
-    "canvas_url": "https://your.phantastic.canvas.url",
-    "canvas_token": "A Canvas token with admin privileges",
-    "tool_support_url": "https://your.shiny.tool.support.url",
-    "tool_support_username": "A username for tool-support to make API requests",
-    "tool_support_password": "A password for tool-support to make API requests",
-    "proxy_server_url": "https://your.proxy.server.url",
-    "lti_tool_title": "A title for the LTI tool, this will be visible in the Canvas UI",
-    "lti_registration_id": "The registration id for the tool",
-    "lti_account_id": "The testing subaccount id to install the LTI tool after setting the developer keys",
-    "lti_target_link_uri": "The LTI tool url. Example: https://your.lti.tool.url"
+    "lti_tool_title": "A title for the LTI tool, this will be visible in the Canvas UI. Example: Page Design (Preview)",
+    "lti_registration_id": "The registration id for the tool. Example: universityofoxford-pd-preview",
+    "lti_account_id": "The testing subaccount id to install the LTI tool after setting the developer keys. Example: 11370",
+    "lti_target_link_uri": "The LTI tool url. Example: https://localhost:3000/banner-editor.html"
   },
   "ltiKey": {
     "tool_configuration": {
