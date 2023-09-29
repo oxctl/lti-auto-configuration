@@ -28,7 +28,7 @@ IMPORTANT: The script requires the configuration provided by template files, you
 
 Example of the create command:
 ```
-npx lti-auto-configuration -c create -t ./examples/page-design-template.json -s ./examples/setup-template.json -ss ./examples/secrets-template.json
+npx lti-auto-configuration -c -t ./examples/page-design-template.json -s ./examples/setup-template.json -ss ./examples/secrets-template.json
 ```
 This command will run the following actions
  1. Creates an LTI developer key.
@@ -39,7 +39,7 @@ This command will run the following actions
 
 Example of the delete command:
 ```
-npx lti-auto-configuration -c delete -t ./examples/page-design-template.json -s ./examples/setup-template.json -ss ./examples/secrets-template.json
+npx lti-auto-configuration -d -t ./examples/page-design-template.json -s ./examples/setup-template.json -ss ./examples/secrets-template.json
 ```
 This command will run the following actions
  1. Gets the LTI registration from the LTI Auth Server by the registration id present in the template file.
