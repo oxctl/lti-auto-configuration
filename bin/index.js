@@ -37,6 +37,7 @@ program.name('index.js').description('Contains a set of CLI tools to auto-provis
 program
   .option('-c, --create', 'Use this option to create a developer key.')
   .option('-d, --delete', 'Use this option to delete a developer key.')
+  .option('-X [string...]', 'Override values present in the config section of the templates. Example: -X "lti_tool_title=Tool Title Provided By Command Line" -X "lti_registration_id=custom-reg-id".')
   .requiredOption('-t, --templatefile <string>', `The JSON template with the configuration. ${README_RECOMMENDATION}`)
   .requiredOption('-s, --setupfile <string>', `The JSON template with the tool setup. ${README_RECOMMENDATION}`)
   .requiredOption('-ss, --secretsfile <string>', `The JSON template with the secrets. ${README_RECOMMENDATION}`)
@@ -46,6 +47,7 @@ program.parse();
 const options = program.opts();
 const isCreateCommand = options.create;
 const isDeleteCommand = options.delete;
+const overridenProperties = options.X;
 
 if (!isCreateCommand && !isDeleteCommand) {
   console.log(`No command flag has been provided. ${README_RECOMMENDATION}`);
@@ -67,10 +69,62 @@ const config = JSON.parse(jsonTemplate).config;
 const setup = JSON.parse(fs.readFileSync(setupFile, 'utf8')).setup;
 const secrets = JSON.parse(fs.readFileSync(secretsFile, 'utf8')).secrets;
 
-const canvasUrl = setup.canvas_url;
-const canvasToken = secrets.canvas_token;
-const canvasAccountId = config.lti_account_id;
-let canvasProviderUrl = ''
+let canvasUrl = setup.canvas_url;
+let canvasToken = secrets.canvas_token;
+let canvasAccountId = config.lti_account_id;
+
+let ltiServerURL = setup.tool_support_url;
+let proxyServerURL = setup.proxy_server_url;
+let ltiUser = secrets.tool_support_username;
+let ltiPassword = secrets.tool_support_password;
+let ltiRegistrationId = config.lti_registration_id;
+let ltiToolTitle = config.lti_tool_title;
+let ltiToolUrl = config.lti_target_link_uri;
+
+// Properties overriden by command arguments.
+if (overridenProperties) {
+  overridenProperties.forEach(overridenProperty => {
+    const property = overridenProperty.split('=')[0];
+    const value = overridenProperty.split('=')[1];
+    console.log(`The property '${property}' has been overriden from the CLI.`);
+    switch (property) {
+      case 'lti_tool_title':
+        ltiToolTitle = value;
+        break;
+      case 'lti_registration_id':
+        ltiRegistrationId = value;
+        break;
+      case 'lti_target_link_uri':
+        ltiToolUrl = value;
+        break;
+      case 'lti_account_id':
+        canvasAccountId = value;
+        break;
+      case 'canvas_url':
+        canvasUrl = value;
+        break;
+      case 'canvas_token':
+        canvasToken = value;
+        break;
+      case 'tool_support_url':
+        ltiServerURL = value;
+        break;
+      case 'tool_support_username':
+        ltiUser = value;
+        break;
+      case 'tool_support_password':
+        ltiPassword = value;
+        break;
+      case 'proxy_server_url':
+        proxyServerURL = value;
+        break;
+      default:
+        console.log(`Overriden '${property}' option not supported. ${README_RECOMMENDATION}`);
+    }
+  })
+}
+
+let canvasProviderUrl = '';
 // Set the CanvasProviderUrl based on the CanvasUrl
 if (canvasUrl.includes('.test.')) {
   canvasProviderUrl = CANVAS_TEST_PROVIDER_URL;
@@ -79,14 +133,6 @@ if (canvasUrl.includes('.test.')) {
 } else {
   canvasProviderUrl = CANVAS_PROD_PROVIDER_URL;
 }
-
-const ltiServerURL = setup.tool_support_url;
-const proxyServerURL = setup.proxy_server_url;
-const ltiUser = secrets.tool_support_username;
-const ltiPassword = secrets.tool_support_password;
-const ltiRegistrationId = config.lti_registration_id;
-const ltiToolTitle = config.lti_tool_title;
-const ltiToolUrl = config.lti_target_link_uri;
 
 // Replace the variables
 jsonTemplate = jsonTemplate.replaceAll(LTI_TOOL_TITLE, ltiToolTitle);

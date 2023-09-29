@@ -47,6 +47,20 @@ This command will run the following actions
  3. Deletes, if exists, the API developer key present in the registration by client id.
  4. Deletes the LTI registration from the LTI Auth Server.
 
+## Override properties using the CLI
+
+You can override any configuration present in the templates from the command line interface, use the -X option to override any property.
+
+Example of overriding the canvas URL and Token.
+```
+npx lti-auto-configuration -c -t ./examples/page-design-template.json -s ./examples/setup-template.json -ss ./examples/secrets-template.json -X "canvas_url=https://new.canvas.url" -X "canvas_token=letTheLightShineIn"
+```
+
+Example of setting a different tool title and registration id
+```
+npx lti-auto-configuration -c -t ./examples/page-design-template.json -s ./examples/setup-template.json -ss ./examples/secrets-template.json -X "lti_tool_title=New tool title" -X "lti_registration_id=custom-registration-id"
+```
+
 # Releasing
 
 Releasing newer versions of the package requires to push the package to NPM:
