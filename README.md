@@ -39,20 +39,13 @@ This command will run the following actions
 
 Example of the delete command:
 ```
-npx lti-auto-configuration -c delete -t ./examples/page-design-template.json -s ./examples/setup-template.json -ss ./examples/secrets-template.json -d 122010000000000200
+npx lti-auto-configuration -c delete -t ./examples/page-design-template.json -s ./examples/setup-template.json -ss ./examples/secrets-template.json
 ```
 This command will run the following actions
- 1. Deletes the LTI developer key 122010000000000200.
- 2. Gets the LTI registration from the LTI Auth Server.
- 3. Deletes, if exists, the API developer key if exists in the registration.
+ 1. Gets the LTI registration from the LTI Auth Server by the registration id present in the template file.
+ 3. Deletes, if exists, the LTI developer key present in the registration by client id.
+ 3. Deletes, if exists, the API developer key present in the registration by client id.
  4. Deletes the LTI registration from the LTI Auth Server.
-
-# TODO
- - DONE Many things to do and improve, this is just the first version with many pending stuff.
- - DONE. This is only working for page-design and the banner feature.
- - DONE. Accept the tool URL as parameter because right now page-design is hardcoded.
- - DONE. Accept the JSON templates as parameters and move them to the repositories.
- - Release NPX tool in NPM to use it across repositories.
 
 # Releasing
 
