@@ -19,6 +19,7 @@ const LTI_DEV_KEY = '$LTI_DEV_KEY';
 const API_DEV_ID = '$API_DEV_ID';
 const API_DEV_KEY = '$API_DEV_KEY';
 const ACCOUNT_ID = '$ACCOUNT_ID';
+const README_RECOMMENDATION = 'Please check the README file for more information.';
 
 // Canvas provider URLs
 const CANVAS_TEST_PROVIDER_URL = 'https://sso.test.canvaslms.com';
@@ -32,20 +33,30 @@ const CANVAS_ENABLE_DEV_KEY_API_URL = `/api/v1/accounts/1/developer_keys/${DEV_K
 const CANVAS_ADD_EXTERNAL_TOOL_API_URL = `/api/v1/accounts/${ACCOUNT_ID}/external_tools`;
 const TOOL_SUPPORT_CREATE_API_URL = '/admin/tools/';
 
-// Commands
-const CREATE_COMMAND = "CREATE";
-const DELETE_COMMAND = "DELETE";
-
 program.name('index.js').description('Contains a set of CLI tools to auto-provision LTI tools to Canvas').version('1.0.0');
 program
-  .requiredOption('-c, --command <string>', 'The command, create and delete commands are supported.')
-  .requiredOption('-t, --templatefile <string>', 'The JSON template with the configuration. Check the README file for more information.')
-  .requiredOption('-s, --setupfile <string>', 'The JSON template with the tool setup. Check the README file for more information.')
-  .requiredOption('-ss, --secretsfile <string>', 'The JSON template with the secrets. Check the README file for more information.')
+  .option('-c, --create', 'Use this option to create a developer key.')
+  .option('-d, --delete', 'Use this option to delete a developer key.')
+  .requiredOption('-t, --templatefile <string>', `The JSON template with the configuration. ${README_RECOMMENDATION}`)
+  .requiredOption('-s, --setupfile <string>', `The JSON template with the tool setup. ${README_RECOMMENDATION}`)
+  .requiredOption('-ss, --secretsfile <string>', `The JSON template with the secrets. ${README_RECOMMENDATION}`)
   ;
 
 program.parse();
 const options = program.opts();
+const isCreateCommand = options.create;
+const isDeleteCommand = options.delete;
+
+if (!isCreateCommand && !isDeleteCommand) {
+  console.log(`No command flag has been provided. ${README_RECOMMENDATION}`);
+  return;
+}
+
+if (isCreateCommand && isDeleteCommand) {
+  console.log(`Please enter only one command at a time. ${README_RECOMMENDATION}`);
+  return;
+}
+
 const templateFile = options.templatefile;
 const setupFile = options.setupfile;
 const secretsFile = options.secretsfile;
@@ -252,12 +263,8 @@ const deleteLtiToolRegistration = async (registrationId) => {
 /**************************************Main Function*************************************/
 /****************************************************************************************/
 
-if (CREATE_COMMAND !== command.toUpperCase() && DELETE_COMMAND !== command.toUpperCase()) {
-  console.error(`Command ${command} is not supported.`);
-  return;
-}
 
-if (CREATE_COMMAND === command.toUpperCase()) {
+if (isCreateCommand) {
 
   if (!canvasUrl || !canvasToken || !ltiServerURL || !proxyServerURL || !ltiRegistrationId || !ltiToolTitle || !canvasAccountId || !ltiToolUrl) {
     console.error('The create command requires more arguments, please check the config section of your json template file.');
@@ -310,10 +317,10 @@ if (CREATE_COMMAND === command.toUpperCase()) {
 
 }
 
-if (DELETE_COMMAND === command.toUpperCase()) {
+if (isDeleteCommand) {
 
   if (!ltiRegistrationId) {
-    console.error('The delete command requires the LTI registration id. See the README file for more information.');
+    console.error(`The delete command requires the LTI registration id. ${README_RECOMMENDATION}`);
     return;
   }
 
