@@ -13,11 +13,17 @@ const LTI_SERVER_URL = '$LTI_SERVER_URL';
 const PROXY_SERVER_URL = '$PROXY_SERVER_URL';
 const LTI_REGISTRATION_ID = '$LTI_REGISTRATION_ID';
 const CANVAS_URL = '$CANVAS_URL';
+const CANVAS_PROVIDER_URL = '$CANVAS_PROVIDER_URL';
 const LTI_DEV_ID = '$LTI_DEV_ID';
 const LTI_DEV_KEY = '$LTI_DEV_KEY';
 const API_DEV_ID = '$API_DEV_ID';
 const API_DEV_KEY = '$API_DEV_KEY';
 const ACCOUNT_ID = '$ACCOUNT_ID';
+
+// Canvas provider URLs
+const CANVAS_TEST_PROVIDER_URL = 'https://sso.test.canvaslms.com';
+const CANVAS_BETA_PROVIDER_URL = 'https://sso.beta.canvaslms.com';
+const CANVAS_PROD_PROVIDER_URL = 'https://sso.canvaslms.com';
 
 const CANVAS_DELETE_DEV_KEY_API_URL = '/api/v1/developer_keys/';
 const CANVAS_CREATE_LTI_KEY_API_URL = '/api/lti/accounts/1/developer_keys/tool_configuration';
@@ -53,6 +59,15 @@ const secrets = JSON.parse(fs.readFileSync(secretsFile, 'utf8')).secrets;
 const canvasUrl = setup.canvas_url;
 const canvasToken = secrets.canvas_token;
 const canvasAccountId = config.lti_account_id;
+let canvasProviderUrl = ''
+// Set the CanvasProviderUrl based on the CanvasUrl
+if (canvasUrl.includes('.test.')) {
+  canvasProviderUrl = CANVAS_TEST_PROVIDER_URL;
+} else if (canvasUrl.includes('.beta.')) {
+  canvasProviderUrl = CANVAS_BETA_PROVIDER_URL;
+} else {
+  canvasProviderUrl = CANVAS_PROD_PROVIDER_URL;
+}
 
 const ltiServerURL = setup.tool_support_url;
 const proxyServerURL = setup.proxy_server_url;
@@ -69,6 +84,7 @@ jsonTemplate = jsonTemplate.replaceAll(LTI_SERVER_URL, ltiServerURL);
 jsonTemplate = jsonTemplate.replaceAll(PROXY_SERVER_URL, proxyServerURL);
 jsonTemplate = jsonTemplate.replaceAll(LTI_REGISTRATION_ID, ltiRegistrationId);
 jsonTemplate = jsonTemplate.replaceAll(CANVAS_URL, canvasUrl);
+jsonTemplate = jsonTemplate.replaceAll(CANVAS_PROVIDER_URL, canvasProviderUrl);
 
 /****************************************************************************************/
 /**************************************Canvas********************************************/

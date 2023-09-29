@@ -71,10 +71,10 @@
             "openid"
         ],
         "providerDetails": {
-            "authorizationUri": "https://sso.beta.canvaslms.com/api/lti/authorize_redirect",
-            "tokenUri": "https://sso.beta.canvaslms.com/login/oauth2/token",
+            "authorizationUri": "$CANVAS_PROVIDER_URL/api/lti/authorize_redirect",
+            "tokenUri": "$CANVAS_PROVIDER_URL/login/oauth2/token",
             "userInfoEndpoint": null,
-            "jwkSetUri": "https://sso.beta.canvaslms.com/api/lti/security/jwks",
+            "jwkSetUri": "$CANVAS_PROVIDER_URL/api/lti/security/jwks",
             "issuerUri": null,
             "configurationMetadata": {}
         }
