@@ -36,7 +36,6 @@ program
   .requiredOption('-t, --templatefile <string>', 'The JSON template with the configuration. Check the README file for more information.')
   .requiredOption('-s, --setupfile <string>', 'The JSON template with the tool setup. Check the README file for more information.')
   .requiredOption('-ss, --secretsfile <string>', 'The JSON template with the secrets. Check the README file for more information.')
-  .option('-d, --developerkey <string>', 'The developer key to be deleted. REQUIRED for the delete command.')
   ;
 
 program.parse();
@@ -45,7 +44,6 @@ const templateFile = options.templatefile;
 const setupFile = options.setupfile;
 const secretsFile = options.secretsfile;
 const command = options.command;
-const canvasDeveloperKeyToDelete = options.developerkey;
 
 let jsonTemplate = fs.readFileSync(templateFile, 'utf8');
 const config = JSON.parse(jsonTemplate).config;
@@ -204,10 +202,10 @@ const createLtiToolRegistration = async (ltiRegistrationBody) => {
    return null;
 }
 
-const getLtiToolRegistrationByClientId = async (clientId) => {
+const getLtiToolRegistrationByRegistrationId = async (registrationId) => {
 
-  // Get the registration id by clientId
-  return await axios.get(`${ltiServerURL}${TOOL_SUPPORT_CREATE_API_URL}ltiClientId:${clientId}`, AUTH_CONFIG)
+  // Get the registration id by registrationId
+  return await axios.get(`${ltiServerURL}${TOOL_SUPPORT_CREATE_API_URL}ltiRegistrationId:${registrationId}`, AUTH_CONFIG)
     .then(function (response) {
       return response.data;
     })
@@ -298,30 +296,37 @@ if (CREATE_COMMAND === command.toUpperCase()) {
 
 if (DELETE_COMMAND === command.toUpperCase()) {
 
-  if (!canvasDeveloperKeyToDelete) {
-    console.error('The delete command requires the Canvas developer key.');
+  if (!ltiRegistrationId) {
+    console.error('The delete command requires the LTI registration id. See the README file for more information.');
     return;
   }
 
   (async () => {
     try {
 
-      try {
-        // Delete the developer key from Canvas.
-        await deleteDeveloperKeyById(canvasDeveloperKeyToDelete);
-        console.log(`Developer key ${canvasDeveloperKeyToDelete} deleted successfully.`);
-      } catch (error) {
-        console.log(error);
-      }
-
       // Search in the LTI auth server for the key to delete it.
-      const ltiToolRegistration = await getLtiToolRegistrationByClientId (canvasDeveloperKeyToDelete);
+      const ltiToolRegistration = await getLtiToolRegistrationByRegistrationId (ltiRegistrationId);
       const ltiToolRegistrationId = ltiToolRegistration.id;
       console.log(`LTI registration found with id ${ltiToolRegistrationId}`);
+
+      const hasLtiKey = ltiToolRegistration.lti !== null;
       const hasProxyKey = ltiToolRegistration.proxy !== null;
+
+      if (hasLtiKey) {
+        const canvasLtiKeyToDelete = ltiToolRegistration.lti.clientId;
+        console.log(`Deleting the LTI developer key ${canvasLtiKeyToDelete}...`);
+        try {
+          // Delete the developer key from Canvas.
+          await deleteDeveloperKeyById(canvasLtiKeyToDelete);
+          console.log(`Developer key ${canvasLtiKeyToDelete} deleted successfully.`);
+        } catch (error) {
+          console.log(error);
+        }
+      }
+
       if (hasProxyKey) {
         const canvasApiKeyToDelete = ltiToolRegistration.proxy.clientId;
-        console.log(`The LTI developer key ${canvasDeveloperKeyToDelete} has an API key ${canvasApiKeyToDelete}. Deleting it too....`);
+        console.log(`Deleting the API developer key ${canvasApiKeyToDelete}....`);
         try {
           // Delete the developer key from Canvas.
           await deleteDeveloperKeyById(canvasApiKeyToDelete);
