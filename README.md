@@ -63,10 +63,11 @@ npx lti-auto-configuration -c -t ./examples/page-design-template.json -s ./examp
 
 # Releasing
 
-Releasing newer versions of the package requires to push the package to NPM:
+Releasing newer versions of the package requires to push the package to NPM, but first, edit the 'bin/index.js' file and bump the version.
 
 ```
 npm version patch
 npm login
 npm publish
+git push --tags
 ```
