@@ -51,12 +51,12 @@ const overridenProperties = options.X;
 
 if (!isCreateCommand && !isDeleteCommand) {
   console.log(`No command flag has been provided. ${README_RECOMMENDATION}`);
-  return;
+  process.exit(1);
 }
 
 if (isCreateCommand && isDeleteCommand) {
   console.log(`Please enter only one command at a time. ${README_RECOMMENDATION}`);
-  return;
+  process.exit(1);
 }
 
 const templateFile = options.templatefile;
@@ -314,7 +314,7 @@ if (isCreateCommand) {
 
   if (!canvasUrl || !canvasToken || !ltiServerURL || !proxyServerURL || !ltiRegistrationId || !ltiToolTitle || !canvasAccountId || !ltiToolUrl) {
     console.error('The create command requires more arguments, please check the config section of your json template file.');
-    return;
+    process.exit(1);
   }
 
   (async () => {
@@ -357,7 +357,8 @@ if (isCreateCommand) {
       console.log(`LTI tool with id ${ltiToolRegistrationId} added to the subaccount ${canvasAccountId}. Enjoy your testing.`);
 
     } catch (error) {
-      console.log(error)
+      console.log(error);
+      process.exit(1);
     }
   })();
 
@@ -367,7 +368,7 @@ if (isDeleteCommand) {
 
   if (!ltiRegistrationId) {
     console.error(`The delete command requires the LTI registration id. ${README_RECOMMENDATION}`);
-    return;
+    process.exit(1);
   }
 
   (async () => {
@@ -410,7 +411,8 @@ if (isDeleteCommand) {
       console.log(`LTI registration ${ltiToolRegistrationId} deleted successfully.`);
 
     } catch (error) {
-      console.log(error)
+      console.log(error);
+      process.exit(1);
     }
   })();
 
