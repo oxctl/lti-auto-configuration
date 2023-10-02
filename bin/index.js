@@ -5,6 +5,9 @@ const axios = require('axios');
 const JSONBigInt = require('json-bigint');
 const fs = require('fs');
 
+// Release version, please BUMP this every new release.
+const RELEASE_VERSION = '1.1.1';
+
 // Constant variables to be replaced
 const DEV_KEY = '$DEV_KEY';
 const LTI_TOOL_TITLE = '$LTI_TOOL_TITLE';
@@ -33,7 +36,7 @@ const CANVAS_ENABLE_DEV_KEY_API_URL = `/api/v1/accounts/1/developer_keys/${DEV_K
 const CANVAS_ADD_EXTERNAL_TOOL_API_URL = `/api/v1/accounts/${ACCOUNT_ID}/external_tools`;
 const TOOL_SUPPORT_CREATE_API_URL = '/admin/tools/';
 
-program.name('index.js').description('Contains a set of CLI tools to auto-provision LTI tools to Canvas').version('1.0.0');
+program.name('index.js').description('Contains a set of CLI tools to auto-provision LTI tools to Canvas').version(RELEASE_VERSION);
 program
   .option('-c, --create', 'Use this option to create a developer key.')
   .option('-d, --delete', 'Use this option to delete a developer key.')
