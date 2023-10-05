@@ -12,6 +12,7 @@ const RELEASE_VERSION = '1.1.1';
 const DEV_KEY = '$DEV_KEY';
 const LTI_TOOL_TITLE = '$LTI_TOOL_TITLE';
 const LTI_TOOL_URL = '$LTI_TOOL_URL';
+const LTI_TOOL_ORIGIN = '$LTI_TOOL_ORIGIN';
 const LTI_SERVER_URL = '$LTI_SERVER_URL';
 const PROXY_SERVER_URL = '$PROXY_SERVER_URL';
 const LTI_REGISTRATION_ID = '$LTI_REGISTRATION_ID';
@@ -127,6 +128,9 @@ if (overridenProperties) {
   })
 }
 
+// To prevent CORS issues we need the tool origin from the URL instead of the tool URL.
+const ltiToolOrigin = new URL(ltiToolUrl).origin;
+
 let canvasProviderUrl = '';
 // Set the CanvasProviderUrl based on the CanvasUrl
 if (canvasUrl.includes('.test.')) {
@@ -140,6 +144,7 @@ if (canvasUrl.includes('.test.')) {
 // Replace the variables
 jsonTemplate = jsonTemplate.replaceAll(LTI_TOOL_TITLE, ltiToolTitle);
 jsonTemplate = jsonTemplate.replaceAll(LTI_TOOL_URL, ltiToolUrl);
+jsonTemplate = jsonTemplate.replaceAll(LTI_TOOL_ORIGIN, ltiToolOrigin);
 jsonTemplate = jsonTemplate.replaceAll(LTI_SERVER_URL, ltiServerURL);
 jsonTemplate = jsonTemplate.replaceAll(PROXY_SERVER_URL, proxyServerURL);
 jsonTemplate = jsonTemplate.replaceAll(LTI_REGISTRATION_ID, ltiRegistrationId);

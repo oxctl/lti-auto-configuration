@@ -102,7 +102,7 @@
         }
     },
     "origins": [
-        "$LTI_TOOL_URL"
+        "$LTI_TOOL_ORIGIN"
     ],
     "sign": true,
     "secret": null,
