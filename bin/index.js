@@ -129,7 +129,10 @@ if (overridenProperties) {
 }
 
 // To prevent CORS issues we need the tool origin from the URL instead of the tool URL.
-const ltiToolOrigin = new URL(ltiToolUrl).origin;
+let ltiToolOrigin = '*'
+if (ltiToolUrl) {
+  ltiToolOrigin = new URL(ltiToolUrl).origin;
+}
 
 let canvasProviderUrl = '';
 // Set the CanvasProviderUrl based on the CanvasUrl
