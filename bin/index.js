@@ -129,9 +129,11 @@ if (overridenProperties) {
 }
 
 // To prevent CORS issues we need the tool origin from the URL instead of the tool URL.
-let ltiToolOrigin = '*'
-if (ltiToolUrl) {
+let ltiToolOrigin = '*';
+try {
   ltiToolOrigin = new URL(ltiToolUrl).origin;
+} catch (error) {
+  console.warn(`The LTI tool url is not valid, ignoring it.`);
 }
 
 let canvasProviderUrl = '';
