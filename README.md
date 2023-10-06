@@ -14,12 +14,12 @@ npm i -g
 Or you can also install it in your project:
 
 ```
-npm i lti-auto-configuration --save-dev
+npm i @oxctl/lti-auto-configuration --save-dev
 ```
 
 Then you can run the script using:
 ```
-npx lti-auto-configuration -h
+npx @oxctl/lti-auto-configuration -h
 ```
 
 The -h flag will make the tool to provide information about what commands are supported and what parameters are required.
@@ -28,7 +28,7 @@ IMPORTANT: The script requires the configuration provided by template files, you
 
 Example of the create command:
 ```
-npx lti-auto-configuration -c -t ./examples/page-design-template.json -s ./examples/setup-template.json -ss ./examples/secrets-template.json
+npx @oxctl/lti-auto-configuration -c -t ./examples/page-design-template.json -s ./examples/setup-template.json -ss ./examples/secrets-template.json
 ```
 This command will run the following actions
  1. Creates an LTI developer key.
@@ -39,7 +39,7 @@ This command will run the following actions
 
 Example of the delete command:
 ```
-npx lti-auto-configuration -d -t ./examples/page-design-template.json -s ./examples/setup-template.json -ss ./examples/secrets-template.json
+npx @oxctl/lti-auto-configuration -d -t ./examples/page-design-template.json -s ./examples/setup-template.json -ss ./examples/secrets-template.json
 ```
 This command will run the following actions
  1. Gets the LTI registration from the LTI Auth Server by the registration id present in the template file.
@@ -53,21 +53,23 @@ You can override any configuration present in the templates from the command lin
 
 Example of overriding the canvas URL and Token.
 ```
-npx lti-auto-configuration -c -t ./examples/page-design-template.json -s ./examples/setup-template.json -ss ./examples/secrets-template.json -X "canvas_url=https://new.canvas.url" -X "canvas_token=letTheLightShineIn"
+npx @oxctl/lti-auto-configuration -c -t ./examples/page-design-template.json -s ./examples/setup-template.json -ss ./examples/secrets-template.json -X "canvas_url=https://new.canvas.url" -X "canvas_token=letTheLightShineIn"
 ```
 
 Example of setting a different tool title and registration id
 ```
-npx lti-auto-configuration -c -t ./examples/page-design-template.json -s ./examples/setup-template.json -ss ./examples/secrets-template.json -X "lti_tool_title=New tool title" -X "lti_registration_id=custom-registration-id"
+npx @oxctl/lti-auto-configuration -c -t ./examples/page-design-template.json -s ./examples/setup-template.json -ss ./examples/secrets-template.json -X "lti_tool_title=New tool title" -X "lti_registration_id=custom-registration-id"
 ```
 
 # Releasing
 
-Releasing newer versions of the package requires to push the package to NPM, but first, edit the 'bin/index.js' file and bump the version.
+Releasing newer versions of the package requires to push the package to NPM, you have to be member of the OXCTL organization and have permissions to push packages.
+
+First, edit the 'bin/index.js' file and bump the version, then commit the result.
 
 ```
 npm version patch
 npm login
-npm publish
+npm publish --access public
 git push --tags
 ```

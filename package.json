@@ -1,7 +1,7 @@
 {
-  "name": "lti-auto-configuration",
+  "name": "@oxctl/lti-auto-configuration",
   "version": "1.1.4",
-  "description": "",
+  "description": "This contains a set of scripts and utility tools to auto provising LTI tools to Canvas.",
   "main": "index.js",
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1"
@@ -16,5 +16,17 @@
   },
   "bin": {
     "lti-auto-configuration": "bin/index.js"
-  }
+  },
+  "directories": {
+    "example": "examples"
+  },
+  "devDependencies": {},
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/oxctl/lti-auto-configuration.git"
+  },
+  "bugs": {
+    "url": "https://github.com/oxctl/lti-auto-configuration/issues"
+  },
+  "homepage": "https://github.com/oxctl/lti-auto-configuration#readme"
 }
