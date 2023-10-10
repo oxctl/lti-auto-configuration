@@ -347,12 +347,6 @@ if (isCreateCommand) {
       const apiDevApiKey = createdApiDevKey.api_key;
       console.log(`API developer key created with id ${apiDevId}`);
 
-      // Once we have the developer keys, we have to enable them.
-      await enableDeveloperKey(ltiDevId);
-      console.log(`LTI developer key enabled with id ${ltiDevId}`);
-      await enableDeveloperKey(apiDevId);
-      console.log(`API developer key enabled with id ${apiDevId}`);
-
       // Replace the developer keys
       jsonTemplate = jsonTemplate.replaceAll(LTI_DEV_ID, ltiDevId);
       jsonTemplate = jsonTemplate.replaceAll(LTI_DEV_KEY, ltiDevApiKey);
@@ -364,6 +358,12 @@ if (isCreateCommand) {
       const ltiToolRegistration = await createLtiToolRegistration(ltiRegistrationBody);
       const ltiToolRegistrationId = ltiToolRegistration.id;
       console.log(`LTI tool registration created with id ${ltiToolRegistrationId}`);
+
+      // Once we have the developer keys, we have to enable them.
+      await enableDeveloperKey(ltiDevId);
+      console.log(`LTI developer key enabled with id ${ltiDevId}`);
+      await enableDeveloperKey(apiDevId);
+      console.log(`API developer key enabled with id ${apiDevId}`);
 
       // Finally we just need to add the LTI tool to the testing subaccount
       const externalTool = await addLtiToolToTestingSubaccount(ltiDevId);
