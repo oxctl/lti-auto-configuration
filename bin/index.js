@@ -296,6 +296,9 @@ const getLtiToolRegistrationByRegistrationId = async (registrationId) => {
       return response.data;
     })
     .catch(function (error) {
+      if (error.response.status !== 404) {
+        throw new Error(`Error getting the LTI tool ${error}`);
+      }
     });
 
    return null;
@@ -394,6 +397,10 @@ if (isDeleteCommand) {
 
       // Search in the LTI auth server for the key to delete it.
       const ltiToolRegistration = await getLtiToolRegistrationByRegistrationId (ltiRegistrationId);
+      if (!ltiToolRegistration) {
+        throw new Error(`A registration with id '${ltiRegistrationId}' does not exists, not deleting any key.`);
+      }
+
       const ltiToolRegistrationId = ltiToolRegistration.id;
       console.log(`LTI registration found with id ${ltiToolRegistrationId}`);
 
