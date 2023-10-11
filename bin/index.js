@@ -296,7 +296,6 @@ const getLtiToolRegistrationByRegistrationId = async (registrationId) => {
       return response.data;
     })
     .catch(function (error) {
-      throw new Error(`Error getting the LTI tool registration ${error}`);
     });
 
    return null;
@@ -332,6 +331,12 @@ if (isCreateCommand) {
 
   (async () => {
     try {
+
+      // Search in tool-support for an existing registration id.
+      const existingLtiToolRegistration = await getLtiToolRegistrationByRegistrationId (ltiRegistrationId);
+      if (existingLtiToolRegistration) {
+        throw new Error(`A registration with id '${ltiRegistrationId}' already exists, not creating any key.`);
+      }
 
       const parsedJsonTemplate = JSON.parse(jsonTemplate);
       const ltiDeveloperkeyBody = parsedJsonTemplate.ltiKey;
