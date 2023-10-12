@@ -83,7 +83,7 @@ let ltiUser = secrets.tool_support_username;
 let ltiPassword = secrets.tool_support_password;
 let ltiRegistrationId = config.lti_registration_id;
 let ltiToolTitle = config.lti_tool_title;
-let ltiToolUrl = config.lti_target_link_uri;
+let ltiToolUrl = config.lti_tool_url;
 
 // Properties overridden by command arguments.
 if (overridenProperties) {
@@ -98,7 +98,7 @@ if (overridenProperties) {
       case 'lti_registration_id':
         ltiRegistrationId = value;
         break;
-      case 'lti_target_link_uri':
+      case 'lti_tool_url':
         ltiToolUrl = value;
         break;
       case 'lti_account_id':
@@ -149,6 +149,7 @@ if (canvasUrl.includes('.test.')) {
 // Replace the variables
 jsonTemplate = jsonTemplate.replaceAll(LTI_TOOL_TITLE, ltiToolTitle);
 jsonTemplate = jsonTemplate.replaceAll(LTI_TOOL_URL, ltiToolUrl);
+// The origin shouldn't be needed in the long run as the ltiToolUrl shouldn't contain any path.
 jsonTemplate = jsonTemplate.replaceAll(LTI_TOOL_ORIGIN, ltiToolOrigin);
 jsonTemplate = jsonTemplate.replaceAll(LTI_SERVER_URL, ltiServerURL);
 jsonTemplate = jsonTemplate.replaceAll(PROXY_SERVER_URL, proxyServerURL);

@@ -3,7 +3,7 @@
     "lti_tool_title": "A title for the LTI tool, this will be visible in the Canvas UI. Example: Page Design (Preview)",
     "lti_registration_id": "The registration id for the tool. Example: universityofoxford-pd-preview",
     "lti_account_id": "The testing subaccount id to install the LTI tool after setting the developer keys. Example: 11370",
-    "lti_target_link_uri": "The LTI tool url. Example: https://localhost:3000/banner-editor.html"
+    "lti_tool_url": "The LTI tool url (excluding the path part). Example: https://localhost:3000"
   },
   "ltiKey": {
     "tool_configuration": {
@@ -11,7 +11,7 @@
         "public_jwk": {},
         "title": "$LTI_TOOL_TITLE",
         "description": "Pick or upload a banner image to import and display on a page",
-        "target_link_uri": "$LTI_TOOL_URL",
+        "target_link_uri": "$LTI_TOOL_URL/banner-tool.html",
         "oidc_initiation_url": "$LTI_SERVER_URL/lti/login_initiation/",
         "public_jwk_url": "$LTI_SERVER_URL/.well-known/jwks.json",
         "scopes": [],
@@ -23,7 +23,7 @@
                 {
                   "placement": "editor_button",
                   "message_type": "LtiDeepLinkingRequest",
-                  "icon_url": "https://your.lti.tool.url/banner-logo.svg",
+                  "icon_url": "$LTI_TOOL_URL/banner-logo.svg",
                   "text": "$LTI_TOOL_TITLE"
                 }
               ]
@@ -102,7 +102,7 @@
         }
     },
     "origins": [
-        "$LTI_TOOL_ORIGIN"
+        "$LTI_TOOL_URL"
     ],
     "sign": true,
     "secret": null,
