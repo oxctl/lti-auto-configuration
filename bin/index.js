@@ -85,12 +85,12 @@ let ltiRegistrationId = config.lti_registration_id;
 let ltiToolTitle = config.lti_tool_title;
 let ltiToolUrl = config.lti_target_link_uri;
 
-// Properties overriden by command arguments.
+// Properties overridden by command arguments.
 if (overridenProperties) {
-  overridenProperties.forEach(overridenProperty => {
-    const property = overridenProperty.split('=')[0];
-    const value = overridenProperty.split('=')[1];
-    console.log(`The property '${property}' has been overriden from the CLI.`);
+  overridenProperties.forEach(overriddenProperty => {
+    const property = overriddenProperty.split('=')[0];
+    const value = overriddenProperty.split('=')[1];
+    console.log(`The property '${property}' has been overridden from the CLI.`);
     switch (property) {
       case 'lti_tool_title':
         ltiToolTitle = value;
