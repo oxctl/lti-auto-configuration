@@ -11,7 +11,7 @@
         "public_jwk": {},
         "title": "$LTI_TOOL_TITLE",
         "description": "Pick or upload a banner image to import and display on a page",
-        "target_link_uri": "$LTI_TOOL_URL/banner-tool.html",
+        "target_link_uri": "$LTI_TOOL_URL/banner-editor.html",
         "oidc_initiation_url": "$LTI_SERVER_URL/lti/login_initiation/",
         "public_jwk_url": "$LTI_SERVER_URL/.well-known/jwks.json",
         "scopes": [],
