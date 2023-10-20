@@ -61,6 +61,18 @@ Example of setting a different tool title and registration id
 npx @oxctl/lti-auto-configuration -c -t ./examples/page-design-template.json -s ./examples/setup-template.json -ss ./examples/secrets-template.json -X "lti_tool_title=New tool title" -X "lti_registration_id=custom-registration-id"
 ```
 
+# Troubleshooting
+
+If you get a message back of `Error: Untrusted certificate in chain` then you are probably using a self signed certificate
+for one of the endpoints. You can trust additional certificates with node by using the `NODE_EXTRA_CA_CERTS` environmental
+variable. If you're using `mkcert` then you can add those to the trusted list with:
+
+```bash
+export NODE_EXTRA_CA_CERTS="$(mkcert -CAROOT)/rootCA.pem"
+```
+
+
+
 # Releasing
 
 Releasing newer versions of the package requires to push the package to NPM, you have to be member of the OXCTL organization and have permissions to push packages.

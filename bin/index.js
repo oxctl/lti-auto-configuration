@@ -146,6 +146,14 @@ jsonTemplate = jsonTemplate.replaceAll(LTI_REGISTRATION_ID, ltiRegistrationId);
 jsonTemplate = jsonTemplate.replaceAll(CANVAS_URL, canvasUrl);
 jsonTemplate = jsonTemplate.replaceAll(CANVAS_PROVIDER_URL, canvasProviderUrl);
 
+/**
+ * Check if we're failing for a reason we can provide more information about.
+ */
+const checkError = (error) => {
+  if (error.code === 'SELF_SIGNED_CERT_IN_CHAIN') {
+    throw new Error('Untrusted certificate in chain')
+  }
+}
 /****************************************************************************************/
 /**************************************Canvas********************************************/
 /****************************************************************************************/
@@ -164,6 +172,7 @@ const getDevKeys = async () => {
       return response.data;
     })
     .catch(function (error) {
+      checkError(error)
       throw new Error(`Error getting developer keys ${error}`);
     });
 }
@@ -175,6 +184,7 @@ const deleteDeveloperKeyById = async (developerKeyId) => {
       return response.data;
     })
     .catch(function (error) {
+      checkError(error)
       throw new Error(`Error removing developer key ${developerKeyId} by id ${error}`);
     });
 }
@@ -188,10 +198,9 @@ const createLtiDeveloperKey = async (developerKeyBody) => {
       return response.data;
     })
     .catch(function (error) {
+      checkError(error)
       throw new Error(`Error creating the LTI developer key ${error}`);
     });
-
-   return null;
 }
 
 // Method to create an API developer key
@@ -203,10 +212,9 @@ const createApiDeveloperKey = async (developerKeyBody) => {
       return response.data;
     })
     .catch(function (error) {
+      checkError(error)
       throw new Error(`Error creating the API developer key ${error}`);
     });
-
-   return null;
 }
 
 // Method to enable a developer key
@@ -227,9 +235,9 @@ const enableDeveloperKey = async (developerKeyId) => {
     return response.data;
   })
   .catch(function (error) {
+    checkError(error)
     throw new Error(`Error enabling the developer key ${error}`);
   });
-  return null;
 }
 
 // Method to add the created LTI tool to the testing subaccount.
@@ -248,9 +256,9 @@ const addLtiToolToTestingSubaccount = async (developerKeyId) => {
     return response.data;
   })
   .catch(function (error) {
+    checkError(error)
     throw new Error(`Error adding the LTI tool ${developerKeyId} to the testing subaccount ${canvasAccountId} ${error}`);
   });
-  return null;
 }
 
 /****************************************************************************************/
@@ -272,10 +280,9 @@ const createLtiToolRegistration = async (ltiRegistrationBody) => {
       return response.data;
     })
     .catch(function (error) {
+      checkError(error)
       throw new Error(`Error creating the LTI tool registration ${error}`);
     });
-
-   return null;
 }
 
 const getLtiToolRegistrationByRegistrationId = async (registrationId) => {
@@ -286,13 +293,13 @@ const getLtiToolRegistrationByRegistrationId = async (registrationId) => {
       return response.data;
     })
     .catch(function (error) {
-      if (error.response.status !== 404) {
+      checkError(error)
+      if (!error.response || error.response.status !== 404) {
         throw new Error(`Error getting the LTI tool ${error}`);
       }
+        
+      return null;
     });
-
-   return null;
-
 }
 
 const deleteLtiToolRegistration = async (registrationId) => {
@@ -303,10 +310,9 @@ const deleteLtiToolRegistration = async (registrationId) => {
       return response.data;
     })
     .catch(function (error) {
+      checkError(error)
       throw new Error(`Error getting the LTI tool registration ${error}`);
     });
-
-   return null;
 
 }
 
@@ -340,16 +346,19 @@ if (isCreateCommand) {
       const ltiDevApiKey = createdLtiDevKey.developer_key.api_key;
       console.log(`LTI developer key created with id ${ltiDevId}`);
 
-      const createdApiDevKey = await createApiDeveloperKey(apiDeveloperkeyBody);
-      const apiDevId = createdApiDevKey.id.toFixed();
-      const apiDevApiKey = createdApiDevKey.api_key;
-      console.log(`API developer key created with id ${apiDevId}`);
-
       // Replace the developer keys
       jsonTemplate = jsonTemplate.replaceAll(LTI_DEV_ID, ltiDevId);
       jsonTemplate = jsonTemplate.replaceAll(LTI_DEV_KEY, ltiDevApiKey);
-      jsonTemplate = jsonTemplate.replaceAll(API_DEV_ID, apiDevId);
-      jsonTemplate = jsonTemplate.replaceAll(API_DEV_KEY, apiDevApiKey);
+
+      if (apiDeveloperkeyBody) {
+        const createdApiDevKey = await createApiDeveloperKey(apiDeveloperkeyBody);
+        const apiDevId = createdApiDevKey.id.toFixed();
+        const apiDevApiKey = createdApiDevKey.api_key;
+        // Replace the developer keys
+        jsonTemplate = jsonTemplate.replaceAll(API_DEV_ID, apiDevId);
+        jsonTemplate = jsonTemplate.replaceAll(API_DEV_KEY, apiDevApiKey);
+        console.log(`API developer key created with id ${apiDevId}`);
+      }
 
       const ltiRegistrationBody = JSON.parse(jsonTemplate).toolReg;
       // Once the developer keys are enabled we can create the registrations in the LTI auth server.
@@ -360,8 +369,10 @@ if (isCreateCommand) {
       // Once we have the developer keys, we have to enable them.
       await enableDeveloperKey(ltiDevId);
       console.log(`LTI developer key enabled with id ${ltiDevId}`);
-      await enableDeveloperKey(apiDevId);
-      console.log(`API developer key enabled with id ${apiDevId}`);
+      if (apiDeveloperkeyBody) {
+        await enableDeveloperKey(apiDevId);
+        console.log(`API developer key enabled with id ${apiDevId}`);
+      }
 
       // Finally we just need to add the LTI tool to the testing subaccount
       const externalTool = await addLtiToolToTestingSubaccount(ltiDevId);
