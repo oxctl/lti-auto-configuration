@@ -17,6 +17,7 @@ const PROXY_SERVER_URL = '$PROXY_SERVER_URL';
 const LTI_REGISTRATION_ID = '$LTI_REGISTRATION_ID';
 const CANVAS_URL = '$CANVAS_URL';
 const CANVAS_PROVIDER_URL = '$CANVAS_PROVIDER_URL';
+const CANVAS_ISSUER_URI = '$CANVAS_ISSUER_URI';
 const LTI_DEV_ID = '$LTI_DEV_ID';
 const LTI_DEV_KEY = '$LTI_DEV_KEY';
 const API_DEV_ID = '$API_DEV_ID';
@@ -28,6 +29,11 @@ const README_RECOMMENDATION = 'Please check the README file for more information
 const CANVAS_TEST_PROVIDER_URL = 'https://sso.test.canvaslms.com';
 const CANVAS_BETA_PROVIDER_URL = 'https://sso.beta.canvaslms.com';
 const CANVAS_PROD_PROVIDER_URL = 'https://sso.canvaslms.com';
+
+// Canvas issuer URIs
+const CANVAS_TEST_ISSUER_URI = 'https://canvas.test.instructure.com';
+const CANVAS_BETA_ISSUER_URI = 'https://canvas.beta.instructure.com';
+const CANVAS_PROD_ISSUER_URI = 'https://canvas.instructure.com';
 
 const CANVAS_DELETE_DEV_KEY_API_URL = '/api/v1/developer_keys/';
 const CANVAS_CREATE_LTI_KEY_API_URL = '/api/lti/accounts/1/developer_keys/tool_configuration';
@@ -128,13 +134,17 @@ if (overridenProperties) {
 }
 
 let canvasProviderUrl = '';
+let canvasIssuerUri = '';
 // Set the CanvasProviderUrl based on the CanvasUrl
 if (canvasUrl.includes('.test.')) {
   canvasProviderUrl = CANVAS_TEST_PROVIDER_URL;
+  canvasIssuerUri = CANVAS_TEST_ISSUER_URI;
 } else if (canvasUrl.includes('.beta.')) {
   canvasProviderUrl = CANVAS_BETA_PROVIDER_URL;
+  canvasIssuerUri = CANVAS_BETA_ISSUER_URI;
 } else {
   canvasProviderUrl = CANVAS_PROD_PROVIDER_URL;
+  canvasIssuerUri = CANVAS_PROD_ISSUER_URI;
 }
 
 // Replace the variables
@@ -145,6 +155,7 @@ jsonTemplate = jsonTemplate.replaceAll(PROXY_SERVER_URL, proxyServerURL);
 jsonTemplate = jsonTemplate.replaceAll(LTI_REGISTRATION_ID, ltiRegistrationId);
 jsonTemplate = jsonTemplate.replaceAll(CANVAS_URL, canvasUrl);
 jsonTemplate = jsonTemplate.replaceAll(CANVAS_PROVIDER_URL, canvasProviderUrl);
+jsonTemplate = jsonTemplate.replaceAll(CANVAS_ISSUER_URI, canvasIssuerUri);
 
 /**
  * Check if we're failing for a reason we can provide more information about.
