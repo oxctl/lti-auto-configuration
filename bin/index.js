@@ -350,9 +350,10 @@ if (isCreateCommand) {
       jsonTemplate = jsonTemplate.replaceAll(LTI_DEV_ID, ltiDevId);
       jsonTemplate = jsonTemplate.replaceAll(LTI_DEV_KEY, ltiDevApiKey);
 
+      let apiDevId = null
       if (apiDeveloperkeyBody) {
         const createdApiDevKey = await createApiDeveloperKey(apiDeveloperkeyBody);
-        const apiDevId = createdApiDevKey.id.toFixed();
+        apiDevId = createdApiDevKey.id.toFixed();
         const apiDevApiKey = createdApiDevKey.api_key;
         // Replace the developer keys
         jsonTemplate = jsonTemplate.replaceAll(API_DEV_ID, apiDevId);
@@ -369,7 +370,7 @@ if (isCreateCommand) {
       // Once we have the developer keys, we have to enable them.
       await enableDeveloperKey(ltiDevId);
       console.log(`LTI developer key enabled with id ${ltiDevId}`);
-      if (apiDeveloperkeyBody) {
+      if (apiDeveloperkeyBody && apiDevId) {
         await enableDeveloperKey(apiDevId);
         console.log(`API developer key enabled with id ${apiDevId}`);
       }
