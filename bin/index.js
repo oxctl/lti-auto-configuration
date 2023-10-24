@@ -6,7 +6,7 @@ const JSONBigInt = require('json-bigint');
 const fs = require('fs');
 
 // Release version, please BUMP this every new release.
-const RELEASE_VERSION = '1.1.9';
+const RELEASE_VERSION = '1.1.10';
 
 // Constant variables to be replaced
 const DEV_KEY = '$DEV_KEY';
