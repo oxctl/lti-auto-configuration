@@ -80,8 +80,12 @@ Releasing newer versions of the package requires to push the package to NPM, you
 First, edit the 'bin/index.js' file and bump the version, then commit the result.
 
 ```
+git checkout main
+# edit bin/index.js
+git add bin/index.js
+git commit -m "Version bump"
 npm version patch
 npm login
 npm publish --access public
-git push --tags
+git push && git push --tags
 ```
