@@ -147,6 +147,7 @@ if (canvasUrl.includes('.test.')) {
   canvasIssuerUri = CANVAS_PROD_ISSUER_URI;
 }
 
+
 // Replace the variables
 jsonTemplate = jsonTemplate.replaceAll(LTI_TOOL_TITLE, ltiToolTitle);
 jsonTemplate = jsonTemplate.replaceAll(LTI_TOOL_URL, ltiToolUrl);
@@ -156,6 +157,7 @@ jsonTemplate = jsonTemplate.replaceAll(LTI_REGISTRATION_ID, ltiRegistrationId);
 jsonTemplate = jsonTemplate.replaceAll(CANVAS_URL, canvasUrl);
 jsonTemplate = jsonTemplate.replaceAll(CANVAS_PROVIDER_URL, canvasProviderUrl);
 jsonTemplate = jsonTemplate.replaceAll(CANVAS_ISSUER_URI, canvasIssuerUri);
+
 
 /**
  * Check if we're failing for a reason we can provide more information about.
@@ -327,6 +329,14 @@ const deleteLtiToolRegistration = async (registrationId) => {
 
 }
 
+const retrieveJwk = async (jwkUrl) => {
+  return await axios.get(jwkUrl)
+      .then(response => response.data)
+      .catch(error => {
+        throw new Error(`Error loading ${jwkUrl} of: ${error}`)
+      })
+}
+
 /****************************************************************************************/
 /**************************************Main Function*************************************/
 /****************************************************************************************/
@@ -352,6 +362,21 @@ if (isCreateCommand) {
       const ltiDeveloperkeyBody = parsedJsonTemplate.ltiKey;
       const apiDeveloperkeyBody = parsedJsonTemplate.apiKey;
 
+      // Automatically inline JWK when on localhost this is because unless Canvas is also running locally it won't
+      // be able to contact the JWK endpoint to download the keys.
+      // This isn't a perfect regex as many more things can be on localhost, but it's a reasonable guess
+      // In the future this should be controlled (overwritten) by a command line flag
+      if (/(localhost)|(127.0.0.1)/.test(ltiServerURL)) {
+        const jwkUrl = ltiDeveloperkeyBody.tool_configuration.settings.public_jwk_url
+        if (jwkUrl) {
+          const jwks = await retrieveJwk(jwkUrl);
+          const publicJwk = jwks.keys[0];
+          delete ltiDeveloperkeyBody.tool_configuration.settings.public_jwk_url;
+          ltiDeveloperkeyBody.tool_configuration.settings.public_jwk = publicJwk;
+          console.log(`Embedded key from ${jwkUrl} in LTI developer key`);
+        }
+      }
+
       const createdLtiDevKey = await createLtiDeveloperKey(ltiDeveloperkeyBody);
       const ltiDevId = createdLtiDevKey.developer_key.id.toFixed();
       const ltiDevApiKey = createdLtiDevKey.developer_key.api_key;
@@ -373,6 +398,7 @@ if (isCreateCommand) {
       }
 
       const ltiRegistrationBody = JSON.parse(jsonTemplate).toolReg;
+
       // Once the developer keys are enabled we can create the registrations in the LTI auth server.
       const ltiToolRegistration = await createLtiToolRegistration(ltiRegistrationBody);
       const ltiToolRegistrationId = ltiToolRegistration.id;
