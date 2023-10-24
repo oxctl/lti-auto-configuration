@@ -10,7 +10,10 @@ const RELEASE_VERSION = '1.1.9';
 
 // Constant variables to be replaced
 const DEV_KEY = '$DEV_KEY';
+// Generally this shouldn't be used and $TITLE_SUFFIX should be used instead.
 const LTI_TOOL_TITLE = '$LTI_TOOL_TITLE';
+// Using the suffix allows more content to be in the templates
+const TITLE_SUFFIX = '$TITLE_SUFFIX'
 const LTI_TOOL_URL = '$LTI_TOOL_URL';
 const LTI_SERVER_URL = '$LTI_SERVER_URL';
 const PROXY_SERVER_URL = '$PROXY_SERVER_URL';
@@ -87,7 +90,8 @@ let proxyServerURL = setup.proxy_server_url;
 let ltiUser = secrets.tool_support_username;
 let ltiPassword = secrets.tool_support_password;
 let ltiRegistrationId = config.lti_registration_id;
-let ltiToolTitle = config.lti_tool_title;
+let ltiToolTitle = config.lti_tool_title || '';
+let titleSuffix = config.title_suffix || '';
 let ltiToolUrl = config.lti_tool_url;
 
 // Properties overridden by command arguments.
@@ -99,6 +103,9 @@ if (overridenProperties) {
     switch (property) {
       case 'lti_tool_title':
         ltiToolTitle = value;
+        break;
+      case 'title_suffix':
+        titleSuffix = value;
         break;
       case 'lti_registration_id':
         ltiRegistrationId = value;
@@ -150,6 +157,7 @@ if (canvasUrl.includes('.test.')) {
 
 // Replace the variables
 jsonTemplate = jsonTemplate.replaceAll(LTI_TOOL_TITLE, ltiToolTitle);
+jsonTemplate = jsonTemplate.replaceAll(TITLE_SUFFIX, titleSuffix);
 jsonTemplate = jsonTemplate.replaceAll(LTI_TOOL_URL, ltiToolUrl);
 jsonTemplate = jsonTemplate.replaceAll(LTI_SERVER_URL, ltiServerURL);
 jsonTemplate = jsonTemplate.replaceAll(PROXY_SERVER_URL, proxyServerURL);
@@ -344,7 +352,7 @@ const retrieveJwk = async (jwkUrl) => {
 
 if (isCreateCommand) {
 
-  if (!canvasUrl || !canvasToken || !ltiServerURL || !proxyServerURL || !ltiRegistrationId || !ltiToolTitle || !canvasAccountId || !ltiToolUrl) {
+  if (!canvasUrl || !canvasToken || !ltiServerURL || !proxyServerURL || !ltiRegistrationId || !canvasAccountId || !ltiToolUrl) {
     console.error('The create command requires more arguments, please check the config section of your json template file.');
     process.exit(1);
   }
