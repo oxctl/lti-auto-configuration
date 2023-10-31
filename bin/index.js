@@ -175,6 +175,16 @@ const checkError = (error) => {
     throw new Error('Untrusted certificate in chain')
   }
 }
+
+/**
+ * Check if tool support request is failing for a reason we know more about.
+ */
+const checkToolSupportError = (error) => {
+  if (error.response && error.response.status === 409) {
+      throw new Error('Conflict, check registrationIds (lti/proxy) are unique')
+    }
+  }
+}
 /****************************************************************************************/
 /**************************************Canvas********************************************/
 /****************************************************************************************/
@@ -302,6 +312,7 @@ const createLtiToolRegistration = async (ltiRegistrationBody) => {
     })
     .catch(function (error) {
       checkError(error)
+      checkToolSupportError(error)
       throw new Error(`Error creating the LTI tool registration ${error}`);
     });
 }
@@ -315,6 +326,7 @@ const getLtiToolRegistrationByRegistrationId = async (registrationId) => {
     })
     .catch(function (error) {
       checkError(error)
+      checkToolSupportError(error)
       if (!error.response || error.response.status !== 404) {
         throw new Error(`Error getting the LTI tool ${error}`);
       }
@@ -332,6 +344,7 @@ const deleteLtiToolRegistration = async (registrationId) => {
     })
     .catch(function (error) {
       checkError(error)
+      checkToolSupportError(error)
       throw new Error(`Error getting the LTI tool registration ${error}`);
     });
 
@@ -359,13 +372,13 @@ if (isCreateCommand) {
 
   (async () => {
     try {
-
-      // Search in tool-support for an existing registration id.
+      
+      // Search in tool-support for an existing registration id, otherwise we end up creating multiple keys in Canvas
       const existingLtiToolRegistration = await getLtiToolRegistrationByRegistrationId (ltiRegistrationId);
       if (existingLtiToolRegistration) {
         throw new Error(`A registration with id '${ltiRegistrationId}' already exists, not creating any key.`);
       }
-
+      
       const parsedJsonTemplate = JSON.parse(jsonTemplate);
       const ltiDeveloperkeyBody = parsedJsonTemplate.ltiKey;
       const apiDeveloperkeyBody = parsedJsonTemplate.apiKey;
