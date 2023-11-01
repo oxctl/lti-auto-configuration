@@ -5,6 +5,12 @@ const axios = require('axios');
 const JSONBigInt = require('json-bigint');
 const fs = require('fs');
 
+const [major, minor, patch] = process.versions.node.split('.').map(Number)
+if (major < 15) {
+  console.error(`Requires Node 15 (or higher, ${major} found)`);
+  process.exit(1)
+}
+
 // Release version, please BUMP this every new release.
 const RELEASE_VERSION = '1.1.10';
 
