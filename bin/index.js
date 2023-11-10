@@ -12,7 +12,7 @@ if (major < 15) {
 }
 
 // Release version, please BUMP this every new release.
-const RELEASE_VERSION = '1.1.10';
+const RELEASE_VERSION = '1.1.11';
 
 // Constant variables to be replaced
 const DEV_KEY = '$DEV_KEY';
