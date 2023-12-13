@@ -433,7 +433,6 @@ if (isCreateCommand) {
         }
       }
 
-      const ltiRegistrationBody = JSON.parse(jsonTemplate).toolReg;
 
       // Once the developer keys are enabled we can create the registrations in the LTI auth server.
       const ltiToolRegistration = await createLtiToolRegistration(ltiRegistrationBody);
