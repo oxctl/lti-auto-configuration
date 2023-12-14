@@ -12,7 +12,7 @@ if (major < 15) {
 }
 
 // Release version, please BUMP this every new release.
-const RELEASE_VERSION = '1.1.10';
+const RELEASE_VERSION = '1.1.11';
 
 // Constant variables to be replaced
 const DEV_KEY = '$DEV_KEY';
@@ -32,6 +32,7 @@ const LTI_DEV_KEY = '$LTI_DEV_KEY';
 const API_DEV_ID = '$API_DEV_ID';
 const API_DEV_KEY = '$API_DEV_KEY';
 const ACCOUNT_ID = '$ACCOUNT_ID';
+const PROXY_SECRET = '$PROXY_SECRET';
 const README_RECOMMENDATION = 'Please check the README file for more information.';
 
 // Canvas provider URLs
@@ -93,6 +94,7 @@ let canvasAccountId = config.lti_account_id;
 
 let ltiServerURL = setup.tool_support_url;
 let proxyServerURL = setup.proxy_server_url;
+let proxySecret = secrets.proxy_secret;
 let ltiUser = secrets.tool_support_username;
 let ltiPassword = secrets.tool_support_password;
 let ltiRegistrationId = config.lti_registration_id;
@@ -140,6 +142,9 @@ if (overridenProperties) {
       case 'proxy_server_url':
         proxyServerURL = value;
         break;
+      case 'proxy_secret':
+        proxySecret = value;
+        break;
       default:
         console.log(`Overriden '${property}' option not supported. ${README_RECOMMENDATION}`);
     }
@@ -171,6 +176,7 @@ jsonTemplate = jsonTemplate.replaceAll(LTI_REGISTRATION_ID, ltiRegistrationId);
 jsonTemplate = jsonTemplate.replaceAll(CANVAS_URL, canvasUrl);
 jsonTemplate = jsonTemplate.replaceAll(CANVAS_PROVIDER_URL, canvasProviderUrl);
 jsonTemplate = jsonTemplate.replaceAll(CANVAS_ISSUER_URI, canvasIssuerUri);
+jsonTemplate = jsonTemplate.replaceAll(PROXY_SECRET, proxySecret);
 
 
 /**
