@@ -194,9 +194,9 @@ const checkError = (error) => {
 const checkToolSupportError = (error) => {
   if (error.response && error.response.status === 409) {
       throw new Error('Conflict, check registrationIds (lti/proxy) are unique')
-    }
   }
 }
+  
 /****************************************************************************************/
 /**************************************Canvas********************************************/
 /****************************************************************************************/
@@ -419,18 +419,26 @@ if (isCreateCommand) {
       jsonTemplate = jsonTemplate.replaceAll(LTI_DEV_ID, ltiDevId);
       jsonTemplate = jsonTemplate.replaceAll(LTI_DEV_KEY, ltiDevApiKey);
 
+      let ltiRegistrationBody = JSON.parse(jsonTemplate).toolReg;
       let apiDevId = null
       if (apiDeveloperkeyBody) {
-        const createdApiDevKey = await createApiDeveloperKey(apiDeveloperkeyBody);
-        apiDevId = createdApiDevKey.id.toFixed();
-        const apiDevApiKey = createdApiDevKey.api_key;
-        // Replace the developer keys
-        jsonTemplate = jsonTemplate.replaceAll(API_DEV_ID, apiDevId);
-        jsonTemplate = jsonTemplate.replaceAll(API_DEV_KEY, apiDevApiKey);
-        console.log(`API developer key created with id ${apiDevId}`);
+        // Check if tool-support is configured to use a proxy.
+        if (ltiRegistrationBody.proxy) {
+          const createdApiDevKey = await createApiDeveloperKey(apiDeveloperkeyBody);
+          apiDevId = createdApiDevKey.id.toFixed();
+          const apiDevApiKey = createdApiDevKey.api_key;
+          // Replace the developer keys
+          jsonTemplate = jsonTemplate.replaceAll(API_DEV_ID, apiDevId);
+          jsonTemplate = jsonTemplate.replaceAll(API_DEV_KEY, apiDevApiKey);
+          console.log(`API developer key created with id ${apiDevId}`);
+          // Update the body
+          ltiRegistrationBody = JSON.parse(jsonTemplate).toolReg;
+        } else {
+          // If we don't skip on creation then we end up leaving it on deletion.
+          console.warn(`No API key in tool support registration`)
+        }
       }
 
-      const ltiRegistrationBody = JSON.parse(jsonTemplate).toolReg;
 
       // Once the developer keys are enabled we can create the registrations in the LTI auth server.
       const ltiToolRegistration = await createLtiToolRegistration(ltiRegistrationBody);
