@@ -188,7 +188,7 @@ const checkError = (error) => {
 const checkToolSupportError = (error) => {
   if (error.response && error.response.status === 409) {
       throw new Error('Conflict, check registrationIds (lti/proxy) are unique')
-    }
+  }
 }
   
 /****************************************************************************************/
@@ -413,7 +413,7 @@ if (isCreateCommand) {
       jsonTemplate = jsonTemplate.replaceAll(LTI_DEV_ID, ltiDevId);
       jsonTemplate = jsonTemplate.replaceAll(LTI_DEV_KEY, ltiDevApiKey);
 
-      let ltiRegistrationBody = JSON.parse(jsonTemplate).toolReg
+      let ltiRegistrationBody = JSON.parse(jsonTemplate).toolReg;
       let apiDevId = null
       if (apiDeveloperkeyBody) {
         // Check if tool-support is configured to use a proxy.
