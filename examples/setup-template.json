@@ -1,7 +1,0 @@
-{
-  "setup": {
-    "canvas_url": "The Canvas URL to install the tool. Example: https://your.phantastic.canvas.url",
-    "tool_support_url": "The Tool support URL. Example: https://your.shiny.tool.support.url",
-    "proxy_server_url": "The proxy server URL. Example: https://your.proxy.server.url"
-  }
-}
