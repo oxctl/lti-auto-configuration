@@ -97,10 +97,11 @@ let proxyServerURL = setup.proxy_server_url;
 let proxySecret = secrets.proxy_secret;
 let ltiUser = secrets.tool_support_username;
 let ltiPassword = secrets.tool_support_password;
-let ltiRegistrationId = config.lti_registration_id;
-let ltiToolTitle = config.lti_tool_title || '';
-let titleSuffix = config.title_suffix || '';
-let ltiToolUrl = config.lti_tool_url;
+// Read from config, but allow overriding from setup.
+let ltiRegistrationId = setup.lti_registration_id || config.lti_registration_id;
+let ltiToolTitle = setup.lti_tool_title || config.lti_tool_title || '';
+let titleSuffix = setup.title_suffix || config.title_suffix || '';
+let ltiToolUrl = setup.lti_tool_url || config.lti_tool_url;
 
 // Properties overridden by command arguments.
 if (overridenProperties) {
