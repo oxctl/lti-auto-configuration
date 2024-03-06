@@ -31,7 +31,7 @@ The -h flag will make the tool to provide information about what commands are su
 required.
 
 IMPORTANT: The script requires the configuration provided by template files, you have examples for page-design in the
-examples folder, customize the configuration templates according to your needs putting attention to the required
+`tool-config` folder, customize the configuration templates according to your needs putting attention to the required
 permissions in the scope.
 
 ## Initialisation
@@ -90,8 +90,8 @@ This command will:
 
 Once you no longer need to the tool you can remove it with:
 
-```
-npx @oxctl/lti-auto-configuration -d -t ./examples/page-design-template.json -s ./examples/setup-template.json -ss ./examples/secrets-template.json
+```bash
+npx @oxctl/lti-auto-configuration delete
 ```
 
 This command will run the following actions
