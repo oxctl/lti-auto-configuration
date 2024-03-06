@@ -1,8 +1,7 @@
 {
   "config": {
     "title_suffix": " (dev)",
-    "lti_registration_id": "universityofoxford-pd-dev-2",
-    "lti_account_id": "1",
+    "lti_registration_id": "page-design",
     "lti_tool_url": "https://localhost:3000"
   },
   "ltiKey": {
