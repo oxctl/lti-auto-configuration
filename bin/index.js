@@ -268,7 +268,7 @@ program
             }
             const value = localConfig[name] || lookupValue(name) || templateConfig[name]
             if (!value) {
-                localConfig[name] = prompt(`Value for ${name}`)
+                localConfig[name] = prompt(`Value for ${name}? `)
             }
         }))
         if (Object.keys(localConfig).length) {
