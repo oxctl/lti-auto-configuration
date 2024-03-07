@@ -6,7 +6,7 @@ We developers spend valuable time setting up LTI 1.3 tools in Canvas, we need to
 in some cases API keys, and register the keys in an LTI auth server. Then add the tool to a subaccount to test it or let
 the testers play with it. And all of that per project and environment.
 
-The intention of the scripts is to provide developers an easier ways to create everything needed in a single run, and
+The intention of the scripts is to provide developers an easier way to create everything needed in a single run, and
 being able to delete everything that has been created.
 
 To test it locally, first, install the package globally in your system:
