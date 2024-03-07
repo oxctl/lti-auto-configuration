@@ -1,3 +1,4 @@
 node_modules
 tool-config/local*.json
+*.tgz
 

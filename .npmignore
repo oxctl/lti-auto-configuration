@@ -1,0 +1,8 @@
+# Developer files
+.idea
+# Github workflow files
+.github
+# Sample files
+tool-config
+# Previous builds
+*.tgz
