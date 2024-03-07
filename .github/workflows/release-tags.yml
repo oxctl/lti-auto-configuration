@@ -1,4 +1,4 @@
-# Any tag automatically gets made into a release.
+# Any tag automatically gets made into a release and it gets published to npmjs.
 name: Release Tags
 
 on:
@@ -7,7 +7,20 @@ on:
       - "v*.*.*"
 
 jobs:
-  build:
+  publish-npm:
+    needs: build
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version-file: .nvmrc
+          registry-url: https://registry.npmjs.org/
+      - run: npm ci
+      - run: npm publish
+        env:
+          NODE_AUTH_TOKEN: ${{secrets.NPM_TOKEN}}
+  release:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout
