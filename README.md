@@ -56,7 +56,7 @@ npx @oxctl/lti-auto-configuration setup
 
 ## Add Tool
 
-Now the configuration can be used to add a tool (using example template in `tool-config`:
+Now the configuration can be used to add a tool (using example template in `tool-config`):
 
 ```bash
 npx @oxctl/lti-auto-configuration create
