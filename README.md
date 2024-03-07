@@ -27,8 +27,7 @@ Then you can run the script using:
 npx @oxctl/lti-auto-configuration -h
 ```
 
-The -h flag will make the tool to provide information about what commands are supported and what parameters are
-required.
+The -h flag will output information about what commands are supported and what parameters are required.
 
 IMPORTANT: The script requires the configuration provided by template files, you have examples for page-design in the
 `tool-config` folder, customize the configuration templates according to your needs putting attention to the required
