@@ -125,17 +125,10 @@ export NODE_EXTRA_CA_CERTS="$(mkcert -CAROOT)/rootCA.pem"
 # Releasing
 
 Releasing newer versions of the package requires to push the package to NPM, you have to be member of the OXCTL
-organization and have permissions to push packages.
-
-First, edit the 'bin/index.js' file and bump the version, then commit the result.
+organization and have permissions to push packages. Github Actions with automatically publish a tag to npmjs.com.
+Bumping up the version with `npm version` and pushing those changes should result in a new release being published.
 
 ```
-git checkout main
-# edit bin/index.js
-git add bin/index.js
-git commit -m "Version bump"
 npm version patch
 git push && git push --tags
-npm login
-npm publish --access public
 ```
