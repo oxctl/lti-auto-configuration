@@ -1,9 +1,8 @@
 {
   "config": {
     "title_suffix": " (dev)",
-    "lti_registration_id": "The registration id for the tool. Example: universityofoxford-pd-preview",
-    "lti_account_id": "The testing subaccount id to install the LTI tool after setting the developer keys. Example: 11370",
-    "lti_tool_url": "The LTI tool url (excluding the path part). Example: https://localhost:3000"
+    "lti_registration_id": "page-design",
+    "lti_tool_url": "https://localhost:3000"
   },
   "ltiKey": {
     "tool_configuration": {
@@ -24,7 +23,7 @@
                   "placement": "editor_button",
                   "message_type": "LtiDeepLinkingRequest",
                   "icon_url": "$LTI_TOOL_URL/banner-logo.svg",
-                  "text": "$LTI_TOOL_TITLE"
+                  "text": "Banner Image"
                 }
               ]
             },
@@ -40,7 +39,7 @@
       }
     },
     "developer_key": {
-      "name": "$LTI_TOOL_TITLE",
+      "name": "Pages - Banner Image$TITLE_SUFFIX",
       "redirect_uris": "$LTI_SERVER_URL/lti/login",
       "scopes": []
     }
@@ -106,7 +105,7 @@
     ],
     "sign": true,
     "secret": null,
-    "issuer": "$LTI_SERVER_URL",
+    "issuer": "${LTI_SERVER_URL}",
     "nrpsAllowedRoles": []
   }
 }

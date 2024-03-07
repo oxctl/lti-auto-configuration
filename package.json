@@ -3,6 +3,7 @@
   "version": "1.1.13",
   "description": "This contains a set of scripts and utility tools to auto provising LTI tools to Canvas.",
   "main": "index.js",
+  "type": "module",
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1"
   },
@@ -12,7 +13,9 @@
   "dependencies": {
     "axios": "^1.5.0",
     "commander": "^11.0.0",
-    "json-bigint": "^1.0.0"
+    "config": "^3.3.9",
+    "json-bigint": "^1.0.0",
+    "prompt-sync": "^4.2.0"
   },
   "bin": {
     "lti-auto-configuration": "bin/index.js"
@@ -20,7 +23,6 @@
   "directories": {
     "example": "examples"
   },
-  "devDependencies": {},
   "repository": {
     "type": "git",
     "url": "git+https://github.com/oxctl/lti-auto-configuration.git"
