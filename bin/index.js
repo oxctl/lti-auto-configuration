@@ -261,14 +261,27 @@ program
 
         const localConfig = {}
 
+        const path = `./tool-config/local.json`;
+        let existingConfig = {}
+        if (fs.existsSync(path)) {
+            try {
+                console.log(`Loading config from ${path}`)
+                existingConfig = JSON.parse(fs.readFileSync(path, 'utf8'))
+            } catch (e) {
+                console.error(`Failed to read setup config ${path}. ${e.message}`)
+                process.exit(1) 
+            }
+        }
+
         const template = jsonTemplate.replace(/\$([A-Z_]{2,})|\${([A-Z_]+)}/g, ((match, rawName, wrappedName) => {
             const name = (rawName || wrappedName).toLocaleLowerCase()
             if (ignoredValue(name)) {
                 return match;
             }
             const value = localConfig[name] || lookupValue(name) || templateConfig[name]
-            if (!value) {
-                localConfig[name] = prompt(`Value for ${name}? `)
+            const existingValue = existingConfig[name]
+            if (!value || (existingValue && !localConfig[name]) ) {
+                localConfig[name] = prompt(`Value for ${name}? [default: ${existingValue}]`, existingValue)
             }
         }))
         if (Object.keys(localConfig).length) {
@@ -276,7 +289,6 @@ program
             if (!fs.existsSync('tool-config')) {
                 fs.mkdirSync('tool-config')
             }
-            const path = `./tool-config/local.json`;
             fs.writeFileSync(path, JSON.stringify(localConfig, null, 4))
             console.log(`Written local config to ${path}`)
         } else {
