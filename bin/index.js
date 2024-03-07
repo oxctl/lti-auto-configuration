@@ -322,8 +322,6 @@ program
             const canvasAccountId = lookupValue('canvas_account_id') || 'self'
             const canvas = canvasCreate(canvasUrl, canvasToken)
 
-
-        console.log(textTemplate)
             jsonTemplate = JSON.parse(textTemplate)
 
             // Search in tool-support for an existing registration id, otherwise we end up creating multiple keys in Canvas
