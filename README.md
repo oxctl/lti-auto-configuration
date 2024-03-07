@@ -44,7 +44,7 @@ To initialise things under the `default` environment run:
 npx @oxctl/lti-auto-configuration init
 ```
 
-This will problem for the URL and credentials for Canvas and Tool Support.
+This will prompt for the URL and credentials for Canvas and Tool Support.
 
 ## Setup
 
