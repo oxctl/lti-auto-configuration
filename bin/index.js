@@ -87,12 +87,15 @@ async function validateCanvasUrl(canvasUrl, canvasToken) {
  */
 const validateConfig = () => {
     try {
-        checkDefined('canvas_url')
+        const canvasUrl = checkDefined('canvas_url')
         checkDefined('canvas_token')
 
-        checkDefined('tool_support_url')
+        const toolSupportUrl = checkDefined('tool_support_url')
         checkDefined('tool_support_username')
         checkDefined('tool_support_password')
+        
+        console.log(`Canvas URL: ${canvasUrl}`)
+        console.log(`Tool Support URL: ${toolSupportUrl}`)
     } catch (e) {
         console.error('Configuration missing, please run `init`:' + e.message)
         process.exit(1)
@@ -104,6 +107,7 @@ const checkDefined = (key) => {
     if (!value) {
         throw new Error(`Error: ${key} is not defined`)
     }
+    return value
 }
 
 /**
@@ -248,7 +252,6 @@ program
     .description('Set additional values needed for this tool.')
     .option('-t, --template <template>', 'template to use', './tool-config/tool-config.json')
     .action((options) => {
-        validateConfig()
         let jsonTemplate
         try {
             jsonTemplate = fs.readFileSync(options.template, 'utf8');
