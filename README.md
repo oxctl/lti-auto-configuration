@@ -43,8 +43,16 @@ To initialise things under the `default` environment run:
 ```bash
 npx @oxctl/lti-auto-configuration init
 ```
-
 This will prompt for the URL and credentials for Canvas and Tool Support.
+
+Pass an alternative profile name to the `init` command to set up a different profile for working with different servers:
+
+```bash
+npx @oxctl/lti-auto-configuration init prod
+```
+
+Then when running any of the other commands select to use that profile with `NODE_ENV=prod npx @oxctl/....`
+
 
 ## Setup
 
