@@ -1,11 +1,9 @@
-#!/usr/bin/env node --no-warnings
+#!/usr/bin/env node
 
 // Get process vars set before import
 import '../lib/setup.js'
 import config from 'config'
 import promptSync from 'prompt-sync'
-// This is so that we don't have the version in multiple places.
-import packageJson from '../package.json' assert {type: 'json'}
 import {program} from 'commander';
 import fs from 'node:fs'
 import toolSupportCreate from '../lib/tool-support.js'
@@ -191,7 +189,9 @@ const configValue = (key) => {
 
 program
     .name('index.js')
-    .version(packageJson.version)
+    // This is only defined when running through npm (npx) and not when running directly
+    // Using JSON imports is tool broken to support well across node versions.
+    .version(process.env.npm_package_version || 'unknown')
     .description('Contains a set of CLI tools to auto-provision LTI tools to Canvas')
 
 program
