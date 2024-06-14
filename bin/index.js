@@ -284,7 +284,7 @@ program
             const value = localConfig[name] || lookupValue(name) || templateConfig[name]
             const existingValue = existingConfig[name]
             if (!value || (existingValue && !localConfig[name]) ) {
-                localConfig[name] = prompt(`Value for ${name}? [default: ${existingValue}]`, existingValue)
+                localConfig[name] = prompt(`Value for ${name}? [default: ${existingValue}] `, existingValue)
             }
         }))
         if (Object.keys(localConfig).length) {
