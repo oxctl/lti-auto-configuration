@@ -438,18 +438,6 @@ program
         // Just need this while replacing values, these are the default values.
         let jsonTemplate = JSON.parse(textTemplate).config
 
-        textTemplate = textTemplate.replace(/\$([A-Z_]{2,})|\${([A-Z_]+)}/g, ((match, rawName, wrappedName) => {
-            const name = (rawName || wrappedName).toLocaleLowerCase()
-            if (ignoredValue(name)) {
-                return match;
-            }
-            const value = lookupValue(name) || jsonTemplate[name]
-            if (!value) {
-                throw new Error(`No values defined for ${name}`)
-            }
-            return value
-        }))
-
         const toolSupportUrl = lookupValue('tool_support_url')
         const toolSupportUsername = lookupValue('tool_support_username')
         const toolSupportPassword = lookupValue('tool_support_password')
