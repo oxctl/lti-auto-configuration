@@ -15,6 +15,7 @@
     "commander": "^11.0.0",
     "config": "^3.3.9",
     "json-bigint": "^1.0.0",
+    "parse-link-header": "^2.0.0",
     "prompt-sync": "^4.2.0"
   },
   "bin": {
