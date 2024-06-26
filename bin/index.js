@@ -683,6 +683,58 @@ program
         }
     })
 
+program
+    .command('export')
+    .description('Export the configuration from the tool support server and Canvas')
+    .option('-r, --registration <registration>', 'registration to lookup', 'my-tool')
+    .action(async (options) => {
+        validateConfig();
+
+        const toolSupportUrl = lookupValue('tool_support_url')
+        const toolSupportUsername = lookupValue('tool_support_username')
+        const toolSupportPassword = lookupValue('tool_support_password')
+
+        const toolSupport = toolSupportCreate(toolSupportUrl, toolSupportUsername, toolSupportPassword)
+        const canvasUrl = lookupValue('canvas_url')
+        const canvasToken = lookupValue('canvas_token')
+        const canvas = canvasCreate(canvasUrl, canvasToken)
+        
+        const toolReg = await toolSupport.getLtiToolRegistrationByRegistrationId(options.registration);
+        if (!toolReg) {
+            console.warn(`Warning: Can't find registration: ${options.registration}`)
+            process.exit(1)
+        }
+
+        const hasLtiKey = ltiToolRegistration.lti !== null;
+        const hasProxyKey = ltiToolRegistration.proxy !== null;
+        
+        const config = {}
+        config.toolReg = toolReg
+
+        const developerKeys = await canvas.getDevKeys();
+        if (hasLtiKey) {
+            const canvasLtiKeyId = ltiToolRegistration.lti.clientId;
+            const ltiKey = developerKeys.find(key => key.id === canvasLtiKeyId);
+            if (ltiKey) {
+                config.ltiKey = ltiKey
+            } else {
+                console.warn(`Warning: Can't find LTI developer key ${canvasLtiKeyId}`)
+            }
+        }
+
+        if (hasProxyKey) {
+            const canvasProxyKeyId = ltiToolRegistration.proxy.clientId;
+            const apiKey = developerKeys.find(key => key.id === canvasProxyKeyId);
+            if (apiKey) {
+                config.apiKey = apiKey
+            } else {
+                console.warn(`Warning: Can't find API developer key ${canvasProxyKeyId}`)
+            }
+        }
+        
+        console.log(JSON.stringify(config, null, 4))
+    })
+
 program.action(() => {
     console.log(`No command has been provided.`);
     program.help()
