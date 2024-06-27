@@ -764,7 +764,7 @@ program
 program
     .command('list')
     .description('List the registrations on the tool support server')
-    .action(async (options) => {
+    .action(async () => {
         validateConfig();
 
         const toolSupportUrl = lookupValue('tool_support_url')
