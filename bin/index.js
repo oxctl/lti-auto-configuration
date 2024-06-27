@@ -94,8 +94,8 @@ const validateConfig = () => {
         checkDefined('tool_support_username')
         checkDefined('tool_support_password')
         
-        console.log(`Canvas URL: ${canvasUrl}`)
-        console.log(`Tool Support URL: ${toolSupportUrl}`)
+        console.error(`Canvas URL: ${canvasUrl}`)
+        console.error(`Tool Support URL: ${toolSupportUrl}`)
     } catch (e) {
         console.error('Configuration missing, please run `init`:' + e.message)
         process.exit(1)
