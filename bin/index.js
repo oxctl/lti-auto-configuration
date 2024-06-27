@@ -301,6 +301,7 @@ program
 
 program
     .command('create')
+    .description('Adds the configuration to tool support and Canvas')
     .option('-t, --template <template>', 'template to use', './tool-config/tool-config.json')
     .action(async (options) => {
             validateConfig();
@@ -424,6 +425,7 @@ program
     )
 program
     .command('delete')
+    .description('Deletes the configuration from tool support and Canvas')
     .option('-t, --template <template>', 'template to use', './tool-config/tool-config.json')
     .action(async (options) => {
         validateConfig();
@@ -493,6 +495,7 @@ program
 
 program
     .command('update')
+    .description('Updates the the configuration in tool support and Canvas')
     .option('-t, --template <template>', 'template to use', './tool-config/tool-config.json')
     .action(async (options) => {
         validateConfig();
@@ -619,6 +622,7 @@ program
 
 program
     .command('validate')
+    .description('Checks that the configuration is in tool support and Canvas')
     .option('-t, --template <template>', 'template to use', './tool-config/tool-config.json')
     .action(async (options) => {
         validateConfig();
