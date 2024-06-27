@@ -757,6 +757,21 @@ program
         console.log(JSON.stringify(toolConfig, null, 4))
     })
 
+program
+    .command('list')
+    .description('List the registrations on the tool support server')
+    .action(async (options) => {
+        validateConfig();
+
+        const toolSupportUrl = lookupValue('tool_support_url')
+        const toolSupportUsername = lookupValue('tool_support_username')
+        const toolSupportPassword = lookupValue('tool_support_password')
+
+        const toolSupport = toolSupportCreate(toolSupportUrl, toolSupportUsername, toolSupportPassword)
+        const tools = await toolSupport.listLtiToolRegistration();
+        tools.map(tool => console.log(tool.lti?.registrationId))
+    })
+
 program.action(() => {
     console.log(`No command has been provided.`);
     program.help()
