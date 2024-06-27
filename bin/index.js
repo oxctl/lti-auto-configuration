@@ -705,34 +705,56 @@ program
             process.exit(1)
         }
 
-        const hasLtiKey = ltiToolRegistration.lti !== null;
-        const hasProxyKey = ltiToolRegistration.proxy !== null;
+        const hasLtiKey = toolReg.lti !== null;
+        const hasProxyKey = toolReg.proxy !== null;
         
-        const config = {}
-        config.toolReg = toolReg
+        const toolConfig = {
+            config: {
+                lti_registration_id: options.registration
+            }
+        }
+        toolConfig.toolReg = toolReg
 
         const developerKeys = await canvas.getDevKeys();
         if (hasLtiKey) {
-            const canvasLtiKeyId = ltiToolRegistration.lti.clientId;
+            const canvasLtiKeyId = toolReg.lti.clientId;
             const ltiKey = developerKeys.find(key => key.id === canvasLtiKeyId);
             if (ltiKey) {
-                config.ltiKey = ltiKey
+                toolConfig.ltiKey = {
+                    tool_configuration: {
+                        settings: ltiKey.tool_configuration,  
+                    },
+                    developer_key: {
+                        name: ltiKey.name,
+                        redirect_uris: ltiKey.redirect_uris,
+                        redirect_uri: ltiKey.redirect_uri,
+                        scopes: ltiKey.scopes
+                    }
+                }
             } else {
                 console.warn(`Warning: Can't find LTI developer key ${canvasLtiKeyId}`)
             }
         }
 
         if (hasProxyKey) {
-            const canvasProxyKeyId = ltiToolRegistration.proxy.clientId;
+            const canvasProxyKeyId = toolReg.proxy.clientId;
             const apiKey = developerKeys.find(key => key.id === canvasProxyKeyId);
             if (apiKey) {
-                config.apiKey = apiKey
+                toolConfig.apiKey = {
+                    developer_key: {
+                        name: apiKey.name,
+                        require_scopes: apiKey.require_scopes,
+                        allow_includes: apiKey.allow_includes,
+                        redirect_uris: apiKey.redirect_uris,
+                        scopes: apiKey.scopes
+                    }
+                } 
             } else {
                 console.warn(`Warning: Can't find API developer key ${canvasProxyKeyId}`)
             }
         }
         
-        console.log(JSON.stringify(config, null, 4))
+        console.log(JSON.stringify(toolConfig, null, 4))
     })
 
 program.action(() => {
