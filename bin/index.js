@@ -690,8 +690,7 @@ program
 program
     .command('export')
     .description('Export the configuration from the tool support server and Canvas')
-    .option('-r, --registration <registration>', 'registration to lookup', 'my-tool')
-    .action(async (options) => {
+    .action(async () => {
         validateConfig();
 
         const toolSupportUrl = lookupValue('tool_support_url')
@@ -702,10 +701,12 @@ program
         const canvasUrl = lookupValue('canvas_url')
         const canvasToken = lookupValue('canvas_token')
         const canvas = canvasCreate(canvasUrl, canvasToken)
-        
-        const toolReg = await toolSupport.getLtiToolRegistrationByRegistrationId(options.registration);
+
+        const ltiRegistrationId = lookupValue('lti_registration_id') 
+
+        const toolReg = await toolSupport.getLtiToolRegistrationByRegistrationId(ltiRegistrationId);
         if (!toolReg) {
-            console.warn(`Warning: Can't find registration: ${options.registration}`)
+            console.warn(`Warning: Can't find registration: ${ltiRegistrationId}`)
             process.exit(1)
         }
 
@@ -714,7 +715,7 @@ program
         
         const toolConfig = {
             config: {
-                lti_registration_id: options.registration
+                lti_registration_id: ltiRegistrationId
             }
         }
         toolConfig.toolReg = toolReg

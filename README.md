@@ -127,7 +127,7 @@ This command will run the following actions
 If you have previously deployed a tool then it can be helpful to export the configuration to a file. This can be useful
 when making small changes to an existing tool configuration, or for backing up the configuration.
 ```bash
-npx @oxctl/lti-auto-configuration export --registration my-tool-id 
+npx @oxctl/lti-auto-configuration export
 ```
 
 This command will run the following actions
@@ -160,6 +160,12 @@ Example of overriding the canvas URL and Token.
 ```bash
 NODE_CONFIG='{"canvas_url": "https://new.canvas.url", "canvas_token": "letTheLightShineIn"}' npx @oxctl/lti-auto-configuration create
 ```
+
+You can also pass additional configuration on the command line with:
+
+```bash
+ NODE_CONFIG='{"lti_registration_id": "oxford-cm-dev"}' npx @oxctl/lti-auto-configuration export
+ ```
 
 # Troubleshooting
 
