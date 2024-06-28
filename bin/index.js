@@ -459,7 +459,7 @@ program
         }
 
         const ltiToolRegistrationId = ltiToolRegistration.id;
-        console.log(`LTI registration found with id ${ltiToolRegistrationId}`);
+        console.log(`LTI registration for ${ltiRegistrationId} found with id ${ltiToolRegistrationId}`);
 
         const hasLtiKey = ltiToolRegistration.lti !== null;
         const hasProxyKey = ltiToolRegistration.proxy !== null;
@@ -543,7 +543,7 @@ program
             throw new Error(`A registration with id '${ltiRegistrationId}' does not exists, not updating anything.`);
         }
         const ltiToolRegistrationId = ltiToolRegistration.id;
-        console.log(`LTI registration found with id ${ltiToolRegistrationId}`);
+        console.log(`LTI registration for ${ltiRegistrationId} found with id ${ltiToolRegistrationId}`);
 
         if (/(localhost)|(127.0.0.1)/.test(toolSupportUrl)) {
             const jwkUrl = jsonTemplate.ltiKey.tool_configuration.settings.public_jwk_url
@@ -656,7 +656,7 @@ program
         }
 
         const ltiToolRegistrationId = ltiToolRegistration.id;
-        console.log(`LTI registration found with id ${ltiToolRegistrationId}`);
+        console.log(`LTI registration for ${ltiRegistrationId} found with id ${ltiToolRegistrationId}`);
 
         const hasLtiKey = ltiToolRegistration.lti !== null;
         const hasProxyKey = ltiToolRegistration.proxy !== null;
