@@ -108,6 +108,49 @@ This command will run the following actions
 3. Deletes, if exists, the API developer key present in the registration by client id.
 4. Deletes the LTI registration from the LTI Auth Server.
 
+## Validate Tool Configuration
+
+If you have previously deployed a tool then it can be helpful to check that the configuration is still in-place. This is especially useful where tools are deployed to Canvas instances that get reset regularly (eg beta/test).
+
+```bash
+npx @oxctl/lti-auto-configuration validate
+```
+
+This command will run the following actions
+
+1. Gets the LTI registration from tool support by the registration id.
+2. Check if the LTI developer key present in the registration by client id.
+3. Check if the API developer key present in the registration by client id.
+
+## Export Tool Configuration
+
+If you have previously deployed a tool then it can be helpful to export the configuration to a file. This can be useful
+when making small changes to an existing tool configuration, or for backing up the configuration.
+```bash
+npx @oxctl/lti-auto-configuration export
+```
+
+This command will run the following actions
+
+1. Gets the LTI registration from tool support by the registration.
+2. Get the LTI Key configuration from Canvas.
+3. Get the API Key configuration from Canvas (if configured).
+4. Write out the complete configuration as one blob of JSON.
+
+## List Registration IDs 
+
+When multiple tools are deployed you might not know the registration ID you want to edit. This command lists all the
+registrations installed on a tool support server
+
+```bash
+npx @oxctl/lti-auto-configuration list
+```
+
+This command will run the following actions
+
+1. Gets the all LTI registration from tool support. 
+2. Output the registration IDs for the registrations.
+
 ## Override properties using the CLI
 
 You can override any configuration present in the templates from the command line interface, pass the `NODE_CONFIG` environmental variable:
@@ -117,6 +160,12 @@ Example of overriding the canvas URL and Token.
 ```bash
 NODE_CONFIG='{"canvas_url": "https://new.canvas.url", "canvas_token": "letTheLightShineIn"}' npx @oxctl/lti-auto-configuration create
 ```
+
+You can also pass additional configuration on the command line with:
+
+```bash
+ NODE_CONFIG='{"lti_registration_id": "oxford-cm-dev"}' npx @oxctl/lti-auto-configuration export
+ ```
 
 # Troubleshooting
 

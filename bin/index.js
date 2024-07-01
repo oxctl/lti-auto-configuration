@@ -94,8 +94,8 @@ const validateConfig = () => {
         checkDefined('tool_support_username')
         checkDefined('tool_support_password')
         
-        console.log(`Canvas URL: ${canvasUrl}`)
-        console.log(`Tool Support URL: ${toolSupportUrl}`)
+        console.error(`Canvas URL: ${canvasUrl}`)
+        console.error(`Tool Support URL: ${toolSupportUrl}`)
     } catch (e) {
         console.error('Configuration missing, please run `init`:' + e.message)
         process.exit(1)
@@ -301,6 +301,7 @@ program
 
 program
     .command('create')
+    .description('Adds the configuration to tool support and Canvas')
     .option('-t, --template <template>', 'template to use', './tool-config/tool-config.json')
     .action(async (options) => {
             validateConfig();
@@ -424,6 +425,7 @@ program
     )
 program
     .command('delete')
+    .description('Deletes the configuration from tool support and Canvas')
     .option('-t, --template <template>', 'template to use', './tool-config/tool-config.json')
     .action(async (options) => {
         validateConfig();
@@ -437,18 +439,6 @@ program
 
         // Just need this while replacing values, these are the default values.
         let jsonTemplate = JSON.parse(textTemplate).config
-
-        textTemplate = textTemplate.replace(/\$([A-Z_]{2,})|\${([A-Z_]+)}/g, ((match, rawName, wrappedName) => {
-            const name = (rawName || wrappedName).toLocaleLowerCase()
-            if (ignoredValue(name)) {
-                return match;
-            }
-            const value = lookupValue(name) || jsonTemplate[name]
-            if (!value) {
-                throw new Error(`No values defined for ${name}`)
-            }
-            return value
-        }))
 
         const toolSupportUrl = lookupValue('tool_support_url')
         const toolSupportUsername = lookupValue('tool_support_username')
@@ -469,7 +459,7 @@ program
         }
 
         const ltiToolRegistrationId = ltiToolRegistration.id;
-        console.log(`LTI registration found with id ${ltiToolRegistrationId}`);
+        console.log(`LTI registration for ${ltiRegistrationId} found with id ${ltiToolRegistrationId}`);
 
         const hasLtiKey = ltiToolRegistration.lti !== null;
         const hasProxyKey = ltiToolRegistration.proxy !== null;
@@ -505,6 +495,7 @@ program
 
 program
     .command('update')
+    .description('Updates the the configuration in tool support and Canvas')
     .option('-t, --template <template>', 'template to use', './tool-config/tool-config.json')
     .action(async (options) => {
         validateConfig();
@@ -552,7 +543,7 @@ program
             throw new Error(`A registration with id '${ltiRegistrationId}' does not exists, not updating anything.`);
         }
         const ltiToolRegistrationId = ltiToolRegistration.id;
-        console.log(`LTI registration found with id ${ltiToolRegistrationId}`);
+        console.log(`LTI registration for ${ltiRegistrationId} found with id ${ltiToolRegistrationId}`);
 
         if (/(localhost)|(127.0.0.1)/.test(toolSupportUrl)) {
             const jwkUrl = jsonTemplate.ltiKey.tool_configuration.settings.public_jwk_url
@@ -627,6 +618,163 @@ program
         // Then update the tool registration 
         await toolSupport.updateLtiToolRegistration(ltiToolRegistrationId, jsonTemplate.toolReg);
         console.log(`LTI registration ${ltiToolRegistrationId} updated successfully.`);
+    })
+
+program
+    .command('validate')
+    .description('Checks that the configuration is in tool support and Canvas')
+    .option('-t, --template <template>', 'template to use', './tool-config/tool-config.json')
+    .action(async (options) => {
+        validateConfig();
+        let textTemplate
+        try {
+            textTemplate = fs.readFileSync(options.template, 'utf8');
+        } catch (e) {
+            console.error(`Failed to read template file ${options.template}. ${e.message}`)
+            process.exit(1)
+        }
+
+        // Just need this while replacing values, these are the default values.
+        let jsonTemplate = JSON.parse(textTemplate).config
+
+        const toolSupportUrl = lookupValue('tool_support_url')
+        const toolSupportUsername = lookupValue('tool_support_username')
+        const toolSupportPassword = lookupValue('tool_support_password')
+
+        const toolSupport = toolSupportCreate(toolSupportUrl, toolSupportUsername, toolSupportPassword)
+        const canvasUrl = lookupValue('canvas_url')
+        const canvasToken = lookupValue('canvas_token')
+        const canvasAccountId = lookupValue('canvas_account_id') || 'self'
+        const canvas = canvasCreate(canvasUrl, canvasToken)
+
+        const ltiRegistrationId = lookupValue('lti_registration_id') || jsonTemplate['lti_registration_id']
+        
+        const ltiToolRegistration = await toolSupport.getLtiToolRegistrationByRegistrationId(ltiRegistrationId);
+        if (!ltiToolRegistration) {
+            console.error(`Error: A registration with id '${ltiRegistrationId}' does not exists.`);
+            process.exit(1)
+        }
+
+        const ltiToolRegistrationId = ltiToolRegistration.id;
+        console.log(`LTI registration for ${ltiRegistrationId} found with id ${ltiToolRegistrationId}`);
+
+        const hasLtiKey = ltiToolRegistration.lti !== null;
+        const hasProxyKey = ltiToolRegistration.proxy !== null;
+        
+        const developerKeys = await canvas.getDevKeys();
+        let hasError = false
+        if (hasLtiKey) {
+            const canvasLtiKeyId = ltiToolRegistration.lti.clientId;
+            const ltiKey = developerKeys.find(key => key.id === canvasLtiKeyId);
+            if (ltiKey) {
+                console.log(`Found LTI developer key ${canvasLtiKeyId}`)
+            } else {
+                console.warn(`Warning: Can't find LTI developer key ${canvasLtiKeyId}`)
+            }
+        }
+
+        if (hasProxyKey) {
+            const canvasProxyKeyId = ltiToolRegistration.proxy.clientId;
+            const proxyKey = developerKeys.find(key => key.id === canvasProxyKeyId);
+            if (proxyKey) {
+                console.log(`Found API developer key ${canvasProxyKeyId}`)
+            } else {
+                console.warn(`Warning: Can't find API developer key ${canvasProxyKeyId}`)
+            }
+        }
+        if (hasError) {
+            process.exit(1)
+        }
+    })
+
+program
+    .command('export')
+    .description('Export the configuration from the tool support server and Canvas')
+    .action(async () => {
+        validateConfig();
+
+        const toolSupportUrl = lookupValue('tool_support_url')
+        const toolSupportUsername = lookupValue('tool_support_username')
+        const toolSupportPassword = lookupValue('tool_support_password')
+
+        const toolSupport = toolSupportCreate(toolSupportUrl, toolSupportUsername, toolSupportPassword)
+        const canvasUrl = lookupValue('canvas_url')
+        const canvasToken = lookupValue('canvas_token')
+        const canvas = canvasCreate(canvasUrl, canvasToken)
+
+        const ltiRegistrationId = lookupValue('lti_registration_id') 
+
+        const toolReg = await toolSupport.getLtiToolRegistrationByRegistrationId(ltiRegistrationId);
+        if (!toolReg) {
+            console.warn(`Warning: Can't find registration: ${ltiRegistrationId}`)
+            process.exit(1)
+        }
+
+        const hasLtiKey = toolReg.lti !== null;
+        const hasProxyKey = toolReg.proxy !== null;
+        
+        const toolConfig = {
+            config: {
+                lti_registration_id: ltiRegistrationId
+            }
+        }
+        toolConfig.toolReg = toolReg
+
+        const developerKeys = await canvas.getDevKeys();
+        if (hasLtiKey) {
+            const canvasLtiKeyId = toolReg.lti.clientId;
+            const ltiKey = developerKeys.find(key => key.id === canvasLtiKeyId);
+            if (ltiKey) {
+                toolConfig.ltiKey = {
+                    tool_configuration: {
+                        settings: ltiKey.tool_configuration,  
+                    },
+                    developer_key: {
+                        name: ltiKey.name,
+                        redirect_uris: ltiKey.redirect_uris,
+                        redirect_uri: ltiKey.redirect_uri,
+                        scopes: ltiKey.scopes
+                    }
+                }
+            } else {
+                console.warn(`Warning: Can't find LTI developer key ${canvasLtiKeyId}`)
+            }
+        }
+
+        if (hasProxyKey) {
+            const canvasProxyKeyId = toolReg.proxy.clientId;
+            const apiKey = developerKeys.find(key => key.id === canvasProxyKeyId);
+            if (apiKey) {
+                toolConfig.apiKey = {
+                    developer_key: {
+                        name: apiKey.name,
+                        require_scopes: apiKey.require_scopes,
+                        allow_includes: apiKey.allow_includes,
+                        redirect_uris: apiKey.redirect_uris,
+                        scopes: apiKey.scopes
+                    }
+                } 
+            } else {
+                console.warn(`Warning: Can't find API developer key ${canvasProxyKeyId}`)
+            }
+        }
+        
+        console.log(JSON.stringify(toolConfig, null, 4))
+    })
+
+program
+    .command('list')
+    .description('List the registrations on the tool support server')
+    .action(async () => {
+        validateConfig();
+
+        const toolSupportUrl = lookupValue('tool_support_url')
+        const toolSupportUsername = lookupValue('tool_support_username')
+        const toolSupportPassword = lookupValue('tool_support_password')
+
+        const toolSupport = toolSupportCreate(toolSupportUrl, toolSupportUsername, toolSupportPassword)
+        const tools = await toolSupport.listLtiToolRegistration();
+        tools.map(tool => console.log(tool.lti?.registrationId))
     })
 
 program.action(() => {
