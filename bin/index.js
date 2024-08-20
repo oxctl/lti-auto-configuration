@@ -429,16 +429,16 @@ program
     .option('-t, --template <template>', 'template to use', './tool-config/tool-config.json')
     .action(async (options) => {
         validateConfig();
-        let textTemplate
+        let jsonTemplate = {}
         try {
-            textTemplate = fs.readFileSync(options.template, 'utf8');
+            let textTemplate = fs.readFileSync(options.template, 'utf8');
+            jsonTemplate = JSON.parse(textTemplate).config
         } catch (e) {
-            console.error(`Failed to read template file ${options.template}. ${e.message}`)
-            process.exit(1)
+            // As we just need a registration ID  if there isn't a configuration file it's not a problem
+            // as the value may have been passed in on the command line.
         }
 
         // Just need this while replacing values, these are the default values.
-        let jsonTemplate = JSON.parse(textTemplate).config
 
         const toolSupportUrl = lookupValue('tool_support_url')
         const toolSupportUsername = lookupValue('tool_support_username')
