@@ -260,7 +260,7 @@ program
             process.exit(1)
         }
         // Just need this while replacing values, these are the default values.
-        const templateConfig = JSON.parse(jsonTemplate).config
+        const templateConfig = JSON.parse(jsonTemplate).config || {}
 
         const localConfig = {}
 
