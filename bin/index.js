@@ -569,6 +569,7 @@ program
         ltiDevId = ltiToolRegistration.lti.clientId;
         ltiDevApiKey = ltiToolRegistration.lti.clientSecret
         let apiDevId, apiDevApiKey;
+        let enableApiKey = false;
 
         // Add/Delete/Update
         if (jsonTemplate.apiKey) {
@@ -586,6 +587,8 @@ program
                 apiDevId = createdApiDevKey.id
                 apiDevApiKey = createdApiDevKey.api_key
                 console.log(`API developer key created with id ${apiDevId}`);
+                // Flag we need to enable the API key yet.
+                enableApiKey = true;
             }
         } else {
             if (ltiToolRegistration.proxy) {
@@ -618,6 +621,12 @@ program
         // Then update the tool registration 
         await toolSupport.updateLtiToolRegistration(ltiToolRegistrationId, jsonTemplate.toolReg);
         console.log(`LTI registration ${ltiToolRegistrationId} updated successfully.`);
+
+        if (enableApiKey) {
+            // We added a new API key so now we've setup the tool support entry enable the key.
+            await canvas.enableDeveloperKey(apiDevId);
+            console.log(`API developer key enabled with id ${apiDevId}`);
+        }
     })
 
 program
