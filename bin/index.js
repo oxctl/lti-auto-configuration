@@ -447,7 +447,6 @@ program
         const toolSupport = toolSupportCreate(toolSupportUrl, toolSupportUsername, toolSupportPassword)
         const canvasUrl = lookupValue('canvas_url')
         const canvasToken = lookupValue('canvas_token')
-        const canvasAccountId = lookupValue('canvas_account_id') || 'self'
         const canvas = canvasCreate(canvasUrl, canvasToken)
 
         const ltiRegistrationId = lookupValue('lti_registration_id') || jsonTemplate['lti_registration_id']
@@ -532,7 +531,6 @@ program
         const toolSupport = toolSupportCreate(toolSupportUrl, toolSupportUsername, toolSupportPassword)
         const canvasUrl = lookupValue('canvas_url')
         const canvasToken = lookupValue('canvas_token')
-        const canvasAccountId = lookupValue('canvas_account_id') || 'self'
         const canvas = canvasCreate(canvasUrl, canvasToken)
 
         const ltiRegistrationId = lookupValue('lti_registration_id') || jsonConfig['lti_registration_id']
@@ -653,7 +651,6 @@ program
         const toolSupport = toolSupportCreate(toolSupportUrl, toolSupportUsername, toolSupportPassword)
         const canvasUrl = lookupValue('canvas_url')
         const canvasToken = lookupValue('canvas_token')
-        const canvasAccountId = lookupValue('canvas_account_id') || 'self'
         const canvas = canvasCreate(canvasUrl, canvasToken)
 
         const ltiRegistrationId = lookupValue('lti_registration_id') || jsonTemplate['lti_registration_id']
