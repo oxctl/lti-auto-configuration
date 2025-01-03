@@ -46,7 +46,7 @@ async function validateToolSupportUrl(toolSupportUrl, toolSupportUsername, toolS
             console.log('Untrusted certificate in chain.')
         } else if (e.code === 'ERR_INVALID_URL') {
             // Happens for invalid URL
-            console.log('Invalid Canvas URL.')
+            console.log('Invalid Tool Support URL.')
         } else {
             console.log(e.message)
         }
@@ -723,6 +723,7 @@ program
         const hasProxyKey = toolReg.proxy !== null;
         
         const toolConfig = {
+            // We write out the registration ID so it's available when updating
             config: {
                 lti_registration_id: ltiRegistrationId
             }
