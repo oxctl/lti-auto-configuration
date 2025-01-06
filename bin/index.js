@@ -1,15 +1,22 @@
 #!/usr/bin/env node
 
 // Get process vars set before import
-import '../lib/setup.js'
-import config from 'config'
-import promptSync from 'prompt-sync'
+3dimport promptSync from 'prompt-sync'
 import {program} from 'commander';
 import fs from 'node:fs'
 import toolSupportCreate from '../lib/tool-support.js'
 import canvasCreate from '../lib/canvas.js'
 import {homedir} from "node:os";
+import {
+    checkDefined,
+    ignoredValue,
+    lookupValue,
+    setDefaultValues,
+    setOverrides,
+} from "../lib/config.js";
 
+// The pattern to search for in templates when replacing values.
+const templateRegex = /\$([A-Z_]{2,})|\${([A-Z_]+)}/g;
 
 const [major, minor, patch] = process.versions.node.split('.').map(Number)
 if (major < 18) {
@@ -85,7 +92,7 @@ async function validateCanvasUrl(canvasUrl, canvasToken) {
 /**
  * Validates that we have the essential config set.
  */
-const validateConfig = () => {
+export const validateConfig = () => {
     try {
         const canvasUrl = checkDefined('canvas_url')
         checkDefined('canvas_token')
@@ -93,7 +100,7 @@ const validateConfig = () => {
         const toolSupportUrl = checkDefined('tool_support_url')
         checkDefined('tool_support_username')
         checkDefined('tool_support_password')
-        
+
         console.error(`Canvas URL: ${canvasUrl}`)
         console.error(`Tool Support URL: ${toolSupportUrl}`)
     } catch (e) {
@@ -102,94 +109,7 @@ const validateConfig = () => {
     }
 }
 
-const checkDefined = (key) => {
-    const value = configValue(key)
-    if (!value) {
-        throw new Error(`Error: ${key} is not defined`)
-    }
-    return value
-}
 
-/**
- * Work out the type of Canvas instance based on the canvas URL.
- * This will return prod/beta/test.
- */
-const canvasType = (canvasUrl) => {
-    if (canvasUrl.includes('.test.')) {
-        return 'test';
-    } else if (canvasUrl.includes('.beta.')) {
-        return 'beta';
-    } else {
-        return 'prod'
-    }
-}
-
-
-const valueMappings = {
-    'proxy_server_url': 'tool_support_url',
-    'lti_server_url': 'tool_support_url',
-    'lti_user': 'tool_support_username',
-    'lti_password': 'tool_support_password',
-
-}
-
-/**
- * Is this value generated dynamically as the application runs (so don't replace it with a user value).
- */
-const ignoredValue = (value) => {
-    switch (value) {
-        case 'lti_dev_id':
-        case 'lti_dev_key':
-        case 'api_dev_id':
-        case 'api_dev_key':
-            return true;
-        default:
-            return false;
-    }
-}
-
-const lookupValue = (key) => {
-    let value = configValue(key)
-    if (!value && valueMappings[key]) {
-        value = configValue(valueMappings[key])
-    }
-    if (!value) {
-        // Calculated values based on other values
-        const type = canvasType(configValue('canvas_url'))
-        switch (key) {
-            case 'canvas_provider_url':
-                value = {
-                    'test': 'https://sso.test.canvaslms.com',
-                    'beta': 'https://sso.beta.canvaslms.com',
-                    'prod': 'https://sso.canvaslms.com'
-                }[type]
-                break;
-            case 'canvas_issuer_uri':
-                value = {
-                    'test': 'https://canvas.test.instructure.com',
-                    'beta': 'https://canvas.beta.instructure.com',
-                    'prod': 'https://canvas.instructure.com',
-                }[type]
-                break;
-        }
-    }
-    return value
-}
-
-const configValue = (key) => {
-    // This is an old way of splitting out the values
-    if (config.has(`secrets.${key}`)) {
-        return config.get(`secrets.${key}`)
-    }
-    // This is an old way of splitting out the values
-    if (config.has(`setup.${key}`)) {
-        return config.get(`setup.${key}`)
-    }
-    if (config.has(key)) {
-        return config.get(key)
-    }
-    return undefined
-}
 
 program
     .name('index.js')
@@ -252,15 +172,16 @@ program
     .description('Set additional values needed for this tool.')
     .option('-t, --template <template>', 'template to use', './tool-config/tool-config.json')
     .action((options) => {
-        let jsonTemplate
+        let textTemplate
         try {
-            jsonTemplate = fs.readFileSync(options.template, 'utf8');
+            textTemplate = fs.readFileSync(options.template, 'utf8');
         } catch (e) {
             console.error(`Failed to read template file ${options.template}. ${e.message}`)
             process.exit(1)
         }
         // Just need this while replacing values, these are the default values.
-        const templateConfig = JSON.parse(jsonTemplate).config || {}
+        const jsonTemplate = JSON.parse(textTemplate)
+        setDefaultValues(jsonTemplate.config)
 
         const localConfig = {}
 
@@ -276,12 +197,12 @@ program
             }
         }
 
-        const template = jsonTemplate.replace(/\$([A-Z_]{2,})|\${([A-Z_]+)}/g, ((match, rawName, wrappedName) => {
+        textTemplate.replace(templateRegex, ((match, rawName, wrappedName) => {
             const name = (rawName || wrappedName).toLocaleLowerCase()
             if (ignoredValue(name)) {
                 return match;
             }
-            const value = localConfig[name] || lookupValue(name) || templateConfig[name]
+            const value = localConfig[name] || lookupValue(name) 
             const existingValue = existingConfig[name]
             if (!value || (existingValue && !localConfig[name]) ) {
                 localConfig[name] = prompt(`Value for ${name}? [default: ${existingValue}] `, existingValue)
@@ -303,8 +224,8 @@ program
     .command('create')
     .description('Adds the configuration to tool support and Canvas')
     .option('-t, --template <template>', 'template to use', './tool-config/tool-config.json')
+    .option('-r, --lti-registration-id <ltiRegistrationId>', 'registration id to use')
     .action(async (options) => {
-            validateConfig();
             let textTemplate
             try {
                 textTemplate = fs.readFileSync(options.template, 'utf8');
@@ -312,21 +233,26 @@ program
                 console.error(`Failed to read template file ${options.template}. ${e.message}`)
                 process.exit(1)
             }
-
             // Just need this while replacing values, these are the default values.
-            let jsonTemplate = JSON.parse(textTemplate).config
+            let jsonTemplate = JSON.parse(textTemplate)
+            setDefaultValues(jsonTemplate.config)
+            setOverrides(options)
+            
+            validateConfig();
 
-            textTemplate = textTemplate.replace(/\$([A-Z_]{2,})|\${([A-Z_]+)}/g, ((match, rawName, wrappedName) => {
+            textTemplate = textTemplate.replace(templateRegex, ((match, rawName, wrappedName) => {
                 const name = (rawName || wrappedName).toLocaleLowerCase()
                 if (ignoredValue(name)) {
                     return match;
                 }
-                const value = lookupValue(name) || jsonTemplate[name]
+                const value = lookupValue(name)
                 if (!value) {
                     throw new Error(`No values defined for ${name}`)
                 }
                 return value
             }))
+        
+            jsonTemplate = JSON.parse(textTemplate)
 
             const toolSupportUrl = lookupValue('tool_support_url')
             const toolSupportUsername = lookupValue('tool_support_username')
@@ -338,10 +264,9 @@ program
             const canvasAccountId = lookupValue('canvas_account_id') || 'self'
             const canvas = canvasCreate(canvasUrl, canvasToken)
 
-            jsonTemplate = JSON.parse(textTemplate)
 
             // Search in tool-support for an existing registration id, otherwise we end up creating multiple keys in Canvas
-            const ltiRegistrationId = lookupValue('lti_registration_id') || jsonTemplate['lti_registration_id']
+            const ltiRegistrationId = checkDefined('lti_registration_id')
             const existingLtiToolRegistration = await toolSupport.getLtiToolRegistrationByRegistrationId(ltiRegistrationId);
             if (existingLtiToolRegistration) {
                 throw new Error(`A registration with id '${ltiRegistrationId}' already exists, not creating any key.`);
@@ -366,7 +291,7 @@ program
             const ltiDevApiKey = createdLtiDevKey.developer_key.api_key;
             console.log(`LTI developer key created with id ${ltiDevId}`);
 
-            textTemplate = textTemplate.replace(/\$([A-Z_]{2,})|\${([A-Z_]+)}/g, (match, rawName, wrappedName) => {
+            textTemplate = textTemplate.replace(templateRegex, (match, rawName, wrappedName) => {
                 const name = (rawName || wrappedName).toLocaleLowerCase()
                 switch (name) {
                     case 'lti_dev_id':
@@ -386,7 +311,7 @@ program
                     apiDevId = createdApiDevKey.id
                     apiDevApiKey = createdApiDevKey.api_key
                     console.log(`API developer key created with id ${apiDevId}`);
-                    textTemplate = textTemplate.replace(/\$([A-Z_]{2,})|\${([A-Z_]+)}/g, (match, rawName, wrappedName) => {
+                    textTemplate = textTemplate.replace(templateRegex, (match, rawName, wrappedName) => {
                         const name = (rawName || wrappedName).toLocaleLowerCase()
                         switch (name) {
                             case 'api_dev_id':
@@ -427,16 +352,18 @@ program
     .command('delete')
     .description('Deletes the configuration from tool support and Canvas')
     .option('-t, --template <template>', 'template to use', './tool-config/tool-config.json')
+    .option('-r, --lti-registration-id <ltiRegistrationId>', 'registration id to use')
     .action(async (options) => {
-        validateConfig();
-        let jsonTemplate = {}
+        setOverrides(options)
         try {
             let textTemplate = fs.readFileSync(options.template, 'utf8');
-            jsonTemplate = JSON.parse(textTemplate).config
+            const jsonTemplate = JSON.parse(textTemplate)
+            setDefaultValues(jsonTemplate.config)
         } catch (e) {
             // As we just need a registration ID  if there isn't a configuration file it's not a problem
             // as the value may have been passed in on the command line.
         }
+        validateConfig();
 
         // Just need this while replacing values, these are the default values.
 
@@ -449,7 +376,7 @@ program
         const canvasToken = lookupValue('canvas_token')
         const canvas = canvasCreate(canvasUrl, canvasToken)
 
-        const ltiRegistrationId = lookupValue('lti_registration_id') || jsonTemplate['lti_registration_id']
+        const ltiRegistrationId = checkDefined('lti_registration_id')
 
         // Search in the LTI auth server for the key to delete it.
         const ltiToolRegistration = await toolSupport.getLtiToolRegistrationByRegistrationId(ltiRegistrationId);
@@ -471,7 +398,7 @@ program
                 await canvas.deleteDeveloperKeyById(canvasLtiKeyToDelete);
                 console.log(`Developer key ${canvasLtiKeyToDelete} deleted successfully.`);
             } catch (error) {
-                console.log(error);
+                console.error(`Failed to delete developer key ${canvasLtiKeyToDelete}: ${error.message}`);
             }
         }
 
@@ -483,7 +410,7 @@ program
                 await canvas.deleteDeveloperKeyById(canvasApiKeyToDelete);
                 console.log(`Developer key ${canvasApiKeyToDelete} deleted successfully.`);
             } catch (error) {
-                console.log(error);
+                console.error(`Failed to delete developer key ${canvasApiKeyToDelete}: ${error.message}`);
             }
         }
 
@@ -496,8 +423,8 @@ program
     .command('update')
     .description('Updates the the configuration in tool support and Canvas')
     .option('-t, --template <template>', 'template to use', './tool-config/tool-config.json')
+    .option('-r, --lti-registration-id <ltiRegistrationId>', 'registration id to use')
     .action(async (options) => {
-        validateConfig();
         let textTemplate
         try {
             textTemplate = fs.readFileSync(options.template, 'utf8');
@@ -507,23 +434,23 @@ program
         }
 
         // Just need this while replacing values, these are the default values.
-        let jsonConfig = JSON.parse(textTemplate).config
-
-        textTemplate = textTemplate.replace(/\$([A-Z_]{2,})|\${([A-Z_]+)}/g, ((match, rawName, wrappedName) => {
+        let jsonTemplate = JSON.parse(textTemplate)
+        setOverrides(options)
+        setDefaultValues(jsonTemplate.config)
+        validateConfig();
+        textTemplate = textTemplate.replace(templateRegex, ((match, rawName, wrappedName) => {
             const name = (rawName || wrappedName).toLocaleLowerCase()
             if (ignoredValue(name)) {
                 return match;
             }
-            const value = lookupValue(name) || jsonConfig[name]
+            const value = lookupValue(name)
             if (!value) {
                 throw new Error(`No values defined for ${name}`)
             }
             return value
         }))
 
-        let jsonTemplate = JSON.parse(textTemplate)
-
-
+        jsonTemplate = JSON.parse(textTemplate)
         const toolSupportUrl = lookupValue('tool_support_url')
         const toolSupportUsername = lookupValue('tool_support_username')
         const toolSupportPassword = lookupValue('tool_support_password')
@@ -533,7 +460,7 @@ program
         const canvasToken = lookupValue('canvas_token')
         const canvas = canvasCreate(canvasUrl, canvasToken)
 
-        const ltiRegistrationId = lookupValue('lti_registration_id') || jsonConfig['lti_registration_id']
+        const ltiRegistrationId = checkDefined('lti_registration_id')
 
         // Search in the LTI auth server for the key to delete it.
         const ltiToolRegistration = await toolSupport.getLtiToolRegistrationByRegistrationId(ltiRegistrationId);
@@ -599,7 +526,7 @@ program
             }
         }
 
-        textTemplate = textTemplate.replace(/\$([A-Z_]{2,})|\${([A-Z_]+)}/g, (match, rawName, wrappedName) => {
+        textTemplate = textTemplate.replace(templateRegex, (match, rawName, wrappedName) => {
             const name = (rawName || wrappedName).toLocaleLowerCase()
             switch (name) {
                 case 'lti_dev_id':
@@ -631,18 +558,19 @@ program
     .command('validate')
     .description('Checks that the configuration is in tool support and Canvas')
     .option('-t, --template <template>', 'template to use', './tool-config/tool-config.json')
+    .option('-r, --lti-registration-id <ltiRegistrationId>', 'registration id to use')
     .action(async (options) => {
-        validateConfig();
         let textTemplate
         try {
             textTemplate = fs.readFileSync(options.template, 'utf8');
+            const jsonTemplate = JSON.parse(textTemplate)
+            setDefaultValues(jsonTemplate.config)
         } catch (e) {
-            console.error(`Failed to read template file ${options.template}. ${e.message}`)
-            process.exit(1)
         }
 
+        setOverrides(options)
+        validateConfig();
         // Just need this while replacing values, these are the default values.
-        let jsonTemplate = JSON.parse(textTemplate).config
 
         const toolSupportUrl = lookupValue('tool_support_url')
         const toolSupportUsername = lookupValue('tool_support_username')
@@ -653,7 +581,7 @@ program
         const canvasToken = lookupValue('canvas_token')
         const canvas = canvasCreate(canvasUrl, canvasToken)
 
-        const ltiRegistrationId = lookupValue('lti_registration_id') || jsonTemplate['lti_registration_id']
+        const ltiRegistrationId = checkDefined('lti_registration_id')
         
         const ltiToolRegistration = await toolSupport.getLtiToolRegistrationByRegistrationId(ltiRegistrationId);
         if (!ltiToolRegistration) {
@@ -696,7 +624,18 @@ program
 program
     .command('export')
     .description('Export the configuration from the tool support server and Canvas')
-    .action(async () => {
+    .option('-t, --template <template>', 'template to use', './tool-config/tool-config.json')
+    .option('-r, --lti-registration-id <ltiRegistrationId>', 'registration id to use')
+    .action(async (options) => {
+        setOverrides(options)
+        try {
+            let textTemplate = fs.readFileSync(options.template, 'utf8');
+            const jsonTemplate = JSON.parse(textTemplate)
+            setDefaultValues(jsonTemplate.config)
+        } catch (e) {
+            // As we just need a registration ID  if there isn't a configuration file it's not a problem
+            // as the value may have been passed in on the command line.
+        }
         validateConfig();
 
         const toolSupportUrl = lookupValue('tool_support_url')
@@ -708,7 +647,7 @@ program
         const canvasToken = lookupValue('canvas_token')
         const canvas = canvasCreate(canvasUrl, canvasToken)
 
-        const ltiRegistrationId = lookupValue('lti_registration_id') 
+        const ltiRegistrationId = checkDefined('lti_registration_id') 
 
         const toolReg = await toolSupport.getLtiToolRegistrationByRegistrationId(ltiRegistrationId);
         if (!toolReg) {
