@@ -343,7 +343,7 @@ program
 
 
             // Finally we just need to add the LTI tool to the testing subaccount
-            const externalTool = await canvas.addLtiToolToTestingSubaccount(ltiDevId, canvasAccountId);
+            const externalTool = await canvas.addLtiToolToSubaccount(ltiDevId, canvasAccountId);
             console.log(`LTI tool with id ${ltiDevId} added to the sub-account ${canvasAccountId} on ${canvasUrl}.`);
         }
     )
@@ -457,6 +457,7 @@ program
         const toolSupport = toolSupportCreate(toolSupportUrl, toolSupportUsername, toolSupportPassword)
         const canvasUrl = lookupValue('canvas_url')
         const canvasToken = lookupValue('canvas_token')
+        const canvasAccountId = lookupValue('canvas_account_id') || 'self'
         const canvas = canvasCreate(canvasUrl, canvasToken)
 
         const ltiRegistrationId = checkDefined('lti_registration_id')
@@ -551,6 +552,15 @@ program
             await canvas.enableDeveloperKey(apiDevId);
             console.log(`API developer key enabled with id ${apiDevId}`);
         }
+
+        const ltiTools = await canvas.getLtiTools(canvasAccountId);
+        // For local tools the external tools API uses the shorter ID.
+        const localKeyId = (BigInt(canvasLtiKeyId) % BigInt("10000000000000")).toString()
+        const ltiTool = ltiTools.find(tool => tool.developer_key_id === localKeyId || tool.developer_key_id === canvasLtiKeyId);
+        if (!ltiTool) {
+            await canvas.addLtiToolToSubaccount(ltiDevId, canvasAccountId);
+            console.log(`LTI tool with id ${ltiDevId} added to the sub-account ${canvasAccountId} on ${canvasUrl}.`);
+        }
     })
 
 program
@@ -559,9 +569,8 @@ program
     .option('-t, --template <template>', 'template to use', './tool-config/tool-config.json')
     .option('-r, --lti-registration-id <ltiRegistrationId>', 'registration id to use')
     .action(async (options) => {
-        let textTemplate
         try {
-            textTemplate = fs.readFileSync(options.template, 'utf8');
+            let textTemplate = fs.readFileSync(options.template, 'utf8');
             const jsonTemplate = JSON.parse(textTemplate)
             setDefaultValues(jsonTemplate.config)
         } catch (e) {
@@ -578,6 +587,8 @@ program
         const toolSupport = toolSupportCreate(toolSupportUrl, toolSupportUsername, toolSupportPassword)
         const canvasUrl = lookupValue('canvas_url')
         const canvasToken = lookupValue('canvas_token')
+        const canvasAccountId = lookupValue('canvas_account_id') || 'self'
+
         const canvas = canvasCreate(canvasUrl, canvasToken)
 
         const ltiRegistrationId = checkDefined('lti_registration_id')
@@ -601,8 +612,20 @@ program
             const ltiKey = developerKeys.find(key => key.id === canvasLtiKeyId);
             if (ltiKey) {
                 console.log(`Found LTI developer key ${canvasLtiKeyId}`)
+                const ltiTools = await canvas.getLtiTools(canvasAccountId);
+                // For local tools the external tools API uses the shorter ID.
+                const localKeyId = (BigInt(canvasLtiKeyId) % BigInt("10000000000000")).toString()
+                const ltiTool = ltiTools.find(tool => tool.developer_key_id === localKeyId || tool.developer_key_id === canvasLtiKeyId);
+                if (ltiTool) {
+                    console.info(`LTI tool ${ltiTool.id} found with developer key ${canvasLtiKeyId} in account ${canvasAccountId}`)
+                } else {
+                    console.warn(`Warning: Can't find LTI tool for developer key ${canvasLtiKeyId} in account ${canvasAccountId}`)
+                    hasError = true
+                }
+                
             } else {
                 console.warn(`Warning: Can't find LTI developer key ${canvasLtiKeyId}`)
+                hasError = true
             }
         }
 
@@ -613,6 +636,7 @@ program
                 console.log(`Found API developer key ${canvasProxyKeyId}`)
             } else {
                 console.warn(`Warning: Can't find API developer key ${canvasProxyKeyId}`)
+                hasError = true
             }
         }
         if (hasError) {
@@ -705,6 +729,56 @@ program
         }
         
         console.log(JSON.stringify(toolConfig, null, 4))
+    })
+
+program
+    .command('lookup-lti')
+    .description('Lookup the LTI tool in Canvas')
+    .option('-t, --template <template>', 'template to use', './tool-config/tool-config.json')
+    .option('-r, --lti-registration-id <ltiRegistrationId>', 'registration id to use')
+    .action(async (options) => {
+        setOverrides(options)
+        let textTemplate
+        try {
+            textTemplate = fs.readFileSync(options.template, 'utf8');
+            const jsonTemplate = JSON.parse(textTemplate)
+            setDefaultValues(jsonTemplate.config)
+        } catch (e) {
+        }
+        validateConfig()
+
+        const toolSupportUrl = lookupValue('tool_support_url')
+        const toolSupportUsername = lookupValue('tool_support_username')
+        const toolSupportPassword = lookupValue('tool_support_password')
+
+        const toolSupport = toolSupportCreate(toolSupportUrl, toolSupportUsername, toolSupportPassword)
+
+        const canvasUrl = lookupValue('canvas_url')
+        const canvasToken = lookupValue('canvas_token')
+        const canvasAccountId = lookupValue('canvas_account_id') || 'self'
+
+        const ltiRegistrationId = checkDefined('lti_registration_id')
+
+
+        const ltiRegistration = await toolSupport.getLtiToolRegistrationByRegistrationId(ltiRegistrationId)
+        if (!ltiRegistration) {
+            console.error(`Error: A registration with id '${ltiRegistrationId}' does not exists.`)
+            process.exit(1)
+        }
+        const canvasLtiKeyId = ltiRegistration.lti.clientId
+
+        const canvas = canvasCreate(canvasUrl, canvasToken)
+        const ltiTools = await canvas.getLtiTools(canvasAccountId)
+
+        // For local tools the external tools API uses the shorter ID.
+        const localKeyId = (BigInt(canvasLtiKeyId) % BigInt("10000000000000")).toString()
+        const ltiTool = ltiTools.find(tool => tool.developer_key_id === localKeyId || tool.developer_key_id === canvasLtiKeyId);
+        if (ltiTool) {
+            console.info(JSON.stringify(ltiTool, null, 4))
+        } else {
+            console.error(`Warning: Can't find LTI tool for developer key ${canvasLtiKeyId} in account ${canvasAccountId}`)
+            process.exit(1)
+        }
     })
 
 program
