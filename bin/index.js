@@ -556,6 +556,7 @@ program
         }
 
         const ltiTools = await canvas.getLtiTools(canvasAccountId);
+        const canvasLtiKeyId = ltiToolRegistration.lti.clientId;
         // For local tools the external tools API uses the shorter ID.
         const localKeyId = (BigInt(canvasLtiKeyId) % BigInt("10000000000000")).toString()
         const ltiTool = ltiTools.find(tool => tool.developer_key_id === localKeyId || tool.developer_key_id === canvasLtiKeyId);
