@@ -245,7 +245,8 @@ program
                     return match;
                 }
                 const value = lookupValue(name)
-                if (!value) {
+                // undefined and not zero length string
+                if (!value && value !== '') {
                     throw new Error(`No values defined for ${name}`)
                 }
                 return value
@@ -443,7 +444,8 @@ program
                 return match;
             }
             const value = lookupValue(name)
-            if (!value) {
+            // undefined and not zero length string
+            if (!value && value !== '') {
                 throw new Error(`No values defined for ${name}`)
             }
             return value
