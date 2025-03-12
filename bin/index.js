@@ -14,6 +14,8 @@ import {
     setOverrides,
 } from "../lib/config.js";
 
+import packageJson from '../package.json' with { type: 'json' }
+
 // The pattern to search for in templates when replacing values.
 const templateRegex = /\$([A-Z_]{2,})|\${([A-Z_]+)}/g;
 
@@ -114,7 +116,7 @@ program
     .name('index.js')
     // This is only defined when running through npm (npx) and not when running directly
     // Using JSON imports is tool broken to support well across node versions.
-    .version(process.env.npm_package_version || 'unknown')
+    .version(`${packageJson.name} ${packageJson.version}` || 'unknown')
     .description('Contains a set of CLI tools to auto-provision LTI tools to Canvas')
 
 program
