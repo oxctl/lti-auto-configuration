@@ -6,6 +6,10 @@ on:
     tags:
       - "v*.*.*"
 
+# Default permissions for all jobs
+permissions:
+  contents: read
+
 jobs:
   publish-npm:
     runs-on: ubuntu-latest
@@ -23,6 +27,8 @@ jobs:
   release:
     needs: publish-npm
     runs-on: ubuntu-latest
+    permissions:
+      contents: write
     steps:
       - name: Checkout
         uses: actions/checkout@v4
