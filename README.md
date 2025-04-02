@@ -200,7 +200,6 @@ If you don't want a tool to be added to a sub-account you can set the `canvas_ac
 The following variables are automatically set by the tool and can be used in the configuration:
 
  - `canvas_provider_url` - The URL of the LTI 1.3 initation endpoint for the Canvas instance.
- - ``
  - `lti_dev_id` - The LTI developer key Client ID.
  - `lti_dev_key` - The LTI developer key Client secret.
  - `api_dev_id` - The API developer key Client ID.
