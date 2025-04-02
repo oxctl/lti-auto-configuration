@@ -346,8 +346,10 @@ program
 
 
             // Finally we just need to add the LTI tool to the testing subaccount
-            const externalTool = await canvas.addLtiToolToSubaccount(ltiDevId, canvasAccountId);
-            console.log(`LTI tool with id ${ltiDevId} added to the sub-account ${canvasAccountId} on ${canvasUrl}.`);
+            if (canvasAccountId !== 'none') {
+                await canvas.addLtiToolToSubaccount(ltiDevId, canvasAccountId);
+                console.log(`LTI tool with id ${ltiDevId} added to the sub-account ${canvasAccountId} on ${canvasUrl}.`);
+            }
         }
     )
 program
@@ -557,14 +559,16 @@ program
             console.log(`API developer key enabled with id ${apiDevId}`);
         }
 
-        const ltiTools = await canvas.getLtiTools(canvasAccountId);
-        const canvasLtiKeyId = ltiToolRegistration.lti.clientId;
-        // For local tools the external tools API uses the shorter ID.
-        const localKeyId = (BigInt(canvasLtiKeyId) % BigInt("10000000000000")).toString()
-        const ltiTool = ltiTools.find(tool => tool.developer_key_id === localKeyId || tool.developer_key_id === canvasLtiKeyId);
-        if (!ltiTool) {
-            await canvas.addLtiToolToSubaccount(ltiDevId, canvasAccountId);
-            console.log(`LTI tool with id ${ltiDevId} added to the sub-account ${canvasAccountId} on ${canvasUrl}.`);
+        if (canvasAccountId !== 'none') {
+            const ltiTools = await canvas.getLtiTools(canvasAccountId);
+            const canvasLtiKeyId = ltiToolRegistration.lti.clientId;
+            // For local tools the external tools API uses the shorter ID.
+            const localKeyId = (BigInt(canvasLtiKeyId) % BigInt("10000000000000")).toString()
+            const ltiTool = ltiTools.find(tool => tool.developer_key_id === localKeyId || tool.developer_key_id === canvasLtiKeyId);
+            if (!ltiTool) {
+                await canvas.addLtiToolToSubaccount(ltiDevId, canvasAccountId);
+                console.log(`LTI tool with id ${ltiDevId} added to the sub-account ${canvasAccountId} on ${canvasUrl}.`);
+            }
         }
     })
 
@@ -617,17 +621,18 @@ program
             const ltiKey = developerKeys.find(key => key.id === canvasLtiKeyId);
             if (ltiKey) {
                 console.log(`Found LTI developer key ${canvasLtiKeyId}`)
-                const ltiTools = await canvas.getLtiTools(canvasAccountId);
-                // For local tools the external tools API uses the shorter ID.
-                const localKeyId = (BigInt(canvasLtiKeyId) % BigInt("10000000000000")).toString()
-                const ltiTool = ltiTools.find(tool => tool.developer_key_id === localKeyId || tool.developer_key_id === canvasLtiKeyId);
-                if (ltiTool) {
-                    console.info(`LTI tool ${ltiTool.id} found with developer key ${canvasLtiKeyId} in account ${canvasAccountId}`)
-                } else {
-                    console.warn(`Warning: Can't find LTI tool for developer key ${canvasLtiKeyId} in account ${canvasAccountId}`)
-                    hasError = true
+                if (canvasAccountId !== 'none') {
+                    const ltiTools = await canvas.getLtiTools(canvasAccountId);
+                    // For local tools the external tools API uses the shorter ID.
+                    const localKeyId = (BigInt(canvasLtiKeyId) % BigInt("10000000000000")).toString()
+                    const ltiTool = ltiTools.find(tool => tool.developer_key_id === localKeyId || tool.developer_key_id === canvasLtiKeyId);
+                    if (ltiTool) {
+                        console.info(`LTI tool ${ltiTool.id} found with developer key ${canvasLtiKeyId} in account ${canvasAccountId}`)
+                    } else {
+                        console.warn(`Warning: Can't find LTI tool for developer key ${canvasLtiKeyId} in account ${canvasAccountId}`)
+                        hasError = true
+                    }
                 }
-                
             } else {
                 console.warn(`Warning: Can't find LTI developer key ${canvasLtiKeyId}`)
                 hasError = true
@@ -773,15 +778,20 @@ program
         const canvasLtiKeyId = ltiRegistration.lti.clientId
 
         const canvas = canvasCreate(canvasUrl, canvasToken)
-        const ltiTools = await canvas.getLtiTools(canvasAccountId)
-
-        // For local tools the external tools API uses the shorter ID.
-        const localKeyId = (BigInt(canvasLtiKeyId) % BigInt("10000000000000")).toString()
-        const ltiTool = ltiTools.find(tool => tool.developer_key_id === localKeyId || tool.developer_key_id === canvasLtiKeyId);
-        if (ltiTool) {
-            console.info(JSON.stringify(ltiTool, null, 4))
+        if (canvasAccountId !== 'none') {
+            const ltiTools = await canvas.getLtiTools(canvasAccountId)
+            // For local tools the external tools API uses the shorter ID.
+            const localKeyId = (BigInt(canvasLtiKeyId) % BigInt("10000000000000")).toString()
+            const ltiTool = ltiTools.find(tool => tool.developer_key_id === localKeyId || tool.developer_key_id === canvasLtiKeyId);
+            if (ltiTool) {
+                console.info(JSON.stringify(ltiTool, null, 4))
+            } else {
+                console.error(`Warning: Can't find LTI tool for developer key ${canvasLtiKeyId} in account ${canvasAccountId}`)
+                process.exit(1)
+            }
         } else {
-            console.error(`Warning: Can't find LTI tool for developer key ${canvasLtiKeyId} in account ${canvasAccountId}`)
+            // We need a sub-account to look up the tool in.
+            console.error(`No sub-account to lookup the LTI tool in.`)
             process.exit(1)
         }
     })

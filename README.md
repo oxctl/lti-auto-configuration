@@ -189,3 +189,18 @@ Bumping up the version with `npm version` and pushing those changes should resul
 npm version patch
 git push && git push --tags
 ```
+
+# Notes
+
+## Disabling adding tool to sub-account
+
+If you don't want a tool to be added to a sub-account you can set the `canvas_account_id` configuration to `none`. This can be useful when initially releasing a tool to a production instance and you wish to have more control over when end users see it.
+## Automatic Variables
+
+The following variables are automatically set by the tool and can be used in the configuration:
+
+ - `canvas_provider_url` - The URL of the LTI 1.3 initation endpoint for the Canvas instance.
+ - `lti_dev_id` - The LTI developer key Client ID.
+ - `lti_dev_key` - The LTI developer key Client secret.
+ - `api_dev_id` - The API developer key Client ID.
+ - `api_dev_key` - The API developer key Client secret.
