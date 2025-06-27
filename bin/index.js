@@ -137,17 +137,17 @@ program
 
         let toolSupportUrl, toolSupportUsername, toolSupportPassword
         do {
-            toolSupportUrl = prompt('Tool Support URL? ')
-            toolSupportUsername = prompt('Tool Support Username? ')
-            toolSupportPassword = prompt('Tool Support Password? ')
+            toolSupportUrl = prompt('Tool Support URL? ').trim()
+            toolSupportUsername = prompt('Tool Support Username? ').trim()
+            toolSupportPassword = prompt('Tool Support Password? ').trim()
         } while (!await validateToolSupportUrl(toolSupportUrl, toolSupportUsername, toolSupportPassword) && shouldRetry());
         console.log('Tool Support connection validated.');
 
         let canvasUrl, canvasToken
         do {
             // Now read the things we need.
-            canvasUrl = prompt('Canvas URL? ');
-            canvasToken = prompt('Canvas token? ');
+            canvasUrl = prompt('Canvas URL? ').trim();
+            canvasToken = prompt('Canvas token? ').trim();
         } while (!await validateCanvasUrl(canvasUrl, canvasToken) && shouldRetry());
         console.log('Canvas connection validated.');
 
@@ -206,7 +206,7 @@ program
             const value = localConfig[name] || lookupValue(name) 
             const existingValue = existingConfig[name]
             if (!value || (existingValue && !localConfig[name]) ) {
-                localConfig[name] = prompt(`Value for ${name}? [default: ${existingValue}] `, existingValue)
+                localConfig[name] = prompt(`Value for ${name}? [default: ${existingValue}] `, existingValue).trim()
             }
         }))
         if (Object.keys(localConfig).length) {
