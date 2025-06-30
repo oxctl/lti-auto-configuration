@@ -26,7 +26,7 @@ if (major < 18) {
 }
 
 // Allow ^C to interrupt
-const prompt = promptSync({sigint: true})
+const prompt = promptSync({sigint: true}).trim()
 
 function shouldRetry() {
     const abort = prompt('Abort? [y/n] ')
