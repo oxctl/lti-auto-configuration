@@ -26,7 +26,9 @@ if (major < 18) {
 }
 
 // Allow ^C to interrupt
-const prompt = promptSync({sigint: true})
+const promptFunc = promptSync({sigint: true})
+// Always trim the input, so we don't have to worry about trailing spaces.
+const prompt = (message)=> promptFunc(message).trim()
 
 function shouldRetry() {
     const abort = prompt('Abort? [y/n] ')
