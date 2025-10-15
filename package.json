@@ -19,7 +19,8 @@
     "prompt-sync": "^4.2.0"
   },
   "bin": {
-    "lti-auto-configuration": "bin/index.js"
+    "lti-auto-configuration": "bin/index.js",
+    "lti-config": "bin/index.js"
   },
   "directories": {
     "example": "examples"
