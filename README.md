@@ -12,19 +12,13 @@ being able to delete everything that has been created.
 To test it locally, first, install the package globally in your system:
 
 ```
-npm i -g
-```
-
-Or you can also install it in your project:
-
-```
-npm i @oxctl/lti-auto-configuration --save-dev
+npm i -g @oxctl/lti-auto-configuration
 ```
 
 Then you can run the script using:
 
 ```
-npx @oxctl/lti-auto-configuration -h
+lti-config -h
 ```
 
 The -h flag will output information about what commands are supported and what parameters are required.
@@ -41,14 +35,14 @@ servers.
 To initialise things under the `default` environment run:
 
 ```bash
-npx @oxctl/lti-auto-configuration init
+lti-config init
 ```
 This will prompt for the URL and credentials for Canvas and Tool Support.
 
 Pass an alternative profile name to the `init` command to set up a different profile for working with different servers:
 
 ```bash
-npx @oxctl/lti-auto-configuration init prod
+lti-config init prod
 ```
 
 Then when running any of the other commands select to use that profile with `NODE_ENV=prod npx @oxctl/....`
@@ -59,7 +53,7 @@ Then when running any of the other commands select to use that profile with `NOD
 If the tool has additional configuration it needs to prompt for then these values can be set with:
 
 ```bash
-npx @oxctl/lti-auto-configuration setup
+lti-config setup
 ```
 
 ## Add Tool
@@ -67,7 +61,7 @@ npx @oxctl/lti-auto-configuration setup
 Now the configuration can be used to add a tool (using example template in `tool-config`):
 
 ```bash
-npx @oxctl/lti-auto-configuration create
+lti-config create
 ```
 
 This command will run the following actions:
@@ -83,7 +77,7 @@ This command will run the following actions:
 After you have created the tool if you edit the tool configuration you can update it in Canvas and Tool Support with:
 
 ```bash
-npx @oxctl/lti-auto-configuration update
+lti-config update
 ```
 
 This command will:
@@ -98,7 +92,7 @@ This command will:
 Once you no longer need to the tool you can remove it with:
 
 ```bash
-npx @oxctl/lti-auto-configuration delete
+lti-config delete
 ```
 
 This command will run the following actions
@@ -113,7 +107,7 @@ This command will run the following actions
 If you have previously deployed a tool then it can be helpful to check that the configuration is still in-place. This is especially useful where tools are deployed to Canvas instances that get reset regularly (eg beta/test).
 
 ```bash
-npx @oxctl/lti-auto-configuration validate
+lti-config validate
 ```
 
 This command will run the following actions
@@ -127,7 +121,7 @@ This command will run the following actions
 If you have previously deployed a tool then it can be helpful to export the configuration to a file. This can be useful
 when making small changes to an existing tool configuration, or for backing up the configuration.
 ```bash
-npx @oxctl/lti-auto-configuration export
+lti-config export
 ```
 
 This command will run the following actions
@@ -143,7 +137,7 @@ When multiple tools are deployed you might not know the registration ID you want
 registrations installed on a tool support server
 
 ```bash
-npx @oxctl/lti-auto-configuration list
+lti-config list
 ```
 
 This command will run the following actions
@@ -158,13 +152,13 @@ You can override any configuration present in the templates from the command lin
 Example of overriding the canvas URL and Token.
 
 ```bash
-NODE_CONFIG='{"canvas_url": "https://new.canvas.url", "canvas_token": "letTheLightShineIn"}' npx @oxctl/lti-auto-configuration create
+NODE_CONFIG='{"canvas_url": "https://new.canvas.url", "canvas_token": "letTheLightShineIn"}' lti-config create
 ```
 
 You can also pass additional configuration on the command line with:
 
 ```bash
- NODE_CONFIG='{"lti_registration_id": "oxford-cm-dev"}' npx @oxctl/lti-auto-configuration export
+ NODE_CONFIG='{"lti_registration_id": "oxford-cm-dev"}' lti-config export
  ```
 
 # Troubleshooting
@@ -192,9 +186,23 @@ git push && git push --tags
 
 # Notes
 
+## Testing Locally
+
+To test the tool locally you can use `npx` to run the package without installing it globally:
+
+```bash
+npx . -h
+```
+or if you can install the package globally:
+
+```bash
+npm i -g .
+```
+
 ## Disabling adding tool to sub-account
 
 If you don't want a tool to be added to a sub-account you can set the `canvas_account_id` configuration to `none`. This can be useful when initially releasing a tool to a production instance and you wish to have more control over when end users see it.
+
 ## Automatic Variables
 
 The following variables are automatically set by the tool and can be used in the configuration:
