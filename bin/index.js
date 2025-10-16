@@ -171,15 +171,15 @@ program
         }
     })
 program
-    .command('setup')
+    .command('setup [environment]')
     .description('Set additional values needed for this tool.')
     .option('-t, --template <template>', 'template to use', './tool-config/tool-config.json')
-    .action((options) => {
+    .action((environment, {template}) => {
         let textTemplate
         try {
-            textTemplate = fs.readFileSync(options.template, 'utf8');
+            textTemplate = fs.readFileSync(template, 'utf8');
         } catch (e) {
-            console.error(`Failed to read template file ${options.template}. ${e.message}`)
+            console.error(`Failed to read template file ${template}. ${e.message}`)
             process.exit(1)
         }
         // Just need this while replacing values, these are the default values.
@@ -188,7 +188,10 @@ program
 
         const localConfig = {}
 
-        const path = `./tool-config/local.json`;
+        console.log('Setting config'+ (environment ?` for environment: ${environment}`:'.'))
+        
+        const filename = environment ? `local-${environment}.json` : 'local.json'
+        const path = `./tool-config/${filename}`
         let existingConfig = {}
         if (fs.existsSync(path)) {
             try {
