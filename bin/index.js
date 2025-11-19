@@ -115,7 +115,7 @@ export const validateConfig = () => {
 
 
 program
-    .name('index.js')
+    .name('lti-config')
     // This is only defined when running through npm (npx) and not when running directly
     // Using JSON imports is tool broken to support well across node versions.
     .version(`${packageJson.name} ${packageJson.version}` || 'unknown')
