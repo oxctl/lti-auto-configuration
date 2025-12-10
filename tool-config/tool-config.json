@@ -41,6 +41,7 @@
     "developer_key": {
       "name": "Pages - Banner Image$TITLE_SUFFIX",
       "redirect_uris": "$LTI_SERVER_URL/lti/login",
+      "notes": "Auto-Config: $CURRENT_DATETIME",
       "scopes": []
     }
   },
@@ -49,6 +50,7 @@
     "name": "Pages - Banner Image$TITLE_SUFFIX",
     "require_scopes": true,
     "redirect_uris" : "$PROXY_SERVER_URL/login/oauth2/code/$LTI_REGISTRATION_ID",
+    "notes": "Auto-Config: $CURRENT_DATETIME",
     "scopes": [
       "url:POST|/api/v1/courses/:course_id/files",
       "url:POST|/api/v1/files/:id",
