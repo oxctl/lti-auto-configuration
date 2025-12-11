@@ -717,6 +717,7 @@ program
                         name: ltiKey.name,
                         redirect_uris: ltiKey.redirect_uris,
                         redirect_uri: ltiKey.redirect_uri,
+                        notes: ltiKey.notes,
                         scopes: ltiKey.scopes
                     }
                 }
@@ -735,6 +736,7 @@ program
                         require_scopes: apiKey.require_scopes,
                         allow_includes: apiKey.allow_includes,
                         redirect_uris: apiKey.redirect_uris,
+                        notes: apiKey.notes,
                         scopes: apiKey.scopes
                     }
                 } 

@@ -212,3 +212,4 @@ The following variables are automatically set by the tool and can be used in the
  - `lti_dev_key` - The LTI developer key Client secret.
  - `api_dev_id` - The API developer key Client ID.
  - `api_dev_key` - The API developer key Client secret.
+ - `current_datetime` - The current date and time in ISO-8601 format. This can be useful for marking when a tool was updated.
