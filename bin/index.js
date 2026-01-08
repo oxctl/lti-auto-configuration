@@ -362,7 +362,9 @@ program
     .description('Deletes the configuration from tool support and Canvas')
     .option('-t, --template <template>', 'template to use', './tool-config/tool-config.json')
     .option('-r, --lti-registration-id <ltiRegistrationId>', 'registration id to use')
+    .option('-n, --non-interactive', 'disable confirmation prompt')
     .action(async (options) => {
+
         setOverrides(options)
         try {
             let textTemplate = fs.readFileSync(options.template, 'utf8');
@@ -394,7 +396,16 @@ program
         }
 
         const ltiToolRegistrationId = ltiToolRegistration.id;
-        console.log(`LTI registration for ${ltiRegistrationId} found with id ${ltiToolRegistrationId}`);
+        console.log(`For ${canvasUrl}, the LTI registration for ${ltiRegistrationId} has been found with id ${ltiToolRegistrationId}`);
+
+        // Confirmation prompt for delete operation
+        if (!options.nonInteractive) {
+            const confirmation = prompt('Are you sure you want to delete this configuration? This action cannot be undone. Type "Yes" to confirm: ');
+            if (confirmation.toLowerCase() !== 'yes') {
+                console.log('Delete operation cancelled.');
+                process.exit(0);
+            }
+        }
 
         const hasLtiKey = ltiToolRegistration.lti !== null;
         const hasProxyKey = ltiToolRegistration.proxy !== null;
