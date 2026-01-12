@@ -695,6 +695,7 @@ program
         const canvasUrl = lookupValue('canvas_url')
         const canvasToken = lookupValue('canvas_token')
         const canvas = canvasCreate(canvasUrl, canvasToken)
+        const canvasProviderUrl = lookupValue('canvas_provider_url')
 
         const ltiRegistrationId = checkDefined('lti_registration_id') 
 
@@ -753,6 +754,55 @@ program
                 } 
             } else {
                 console.warn(`Warning: Can't find API developer key ${canvasProxyKeyId}`)
+            }
+        }
+
+        const replaceCanvasProviderUrl = (value) => {
+            if (!value || !canvasProviderUrl || typeof value !== 'string') {
+                return value
+            }
+            if (value.startsWith(canvasProviderUrl)) {
+                return `$CANVAS_PROVIDER_URL${value.slice(canvasProviderUrl.length)}`
+            }
+            return value
+        }
+
+        const replaceCanvasUrl = (value) => {
+            if (!value || !canvasUrl || typeof value !== 'string') {
+                return value
+            }
+            if (value.startsWith(canvasUrl)) {
+                return `$CANVAS_URL${value.slice(canvasUrl.length)}`
+            }
+            return value
+        }
+
+        if (toolConfig.toolReg?.lti) {
+            toolConfig.toolReg.lti.clientId = '$LTI_DEV_ID'
+            toolConfig.toolReg.lti.clientSecret = '$LTI_DEV_KEY'
+            if (toolConfig.toolReg.lti.providerDetails) {
+                toolConfig.toolReg.lti.providerDetails.authorizationUri = replaceCanvasProviderUrl(
+                    toolConfig.toolReg.lti.providerDetails.authorizationUri
+                )
+                toolConfig.toolReg.lti.providerDetails.tokenUri = replaceCanvasProviderUrl(
+                    toolConfig.toolReg.lti.providerDetails.tokenUri
+                )
+                toolConfig.toolReg.lti.providerDetails.jwkSetUri = replaceCanvasProviderUrl(
+                    toolConfig.toolReg.lti.providerDetails.jwkSetUri
+                )
+            }
+        }
+
+        if (toolConfig.toolReg?.proxy) {
+            toolConfig.toolReg.proxy.clientId = '$API_DEV_ID'
+            toolConfig.toolReg.proxy.clientSecret = '$API_DEV_KEY'
+            if (toolConfig.toolReg.proxy.providerDetails) {
+                toolConfig.toolReg.proxy.providerDetails.authorizationUri = replaceCanvasUrl(
+                    toolConfig.toolReg.proxy.providerDetails.authorizationUri
+                )
+                toolConfig.toolReg.proxy.providerDetails.tokenUri = replaceCanvasUrl(
+                    toolConfig.toolReg.proxy.providerDetails.tokenUri
+                )
             }
         }
         
