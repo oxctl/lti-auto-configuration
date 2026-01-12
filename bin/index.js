@@ -728,8 +728,9 @@ program
                         name: ltiKey.name,
                         redirect_uris: ltiKey.redirect_uris,
                         redirect_uri: ltiKey.redirect_uri,
-                        notes: ltiKey.notes,
-                        scopes: ltiKey.scopes
+                        notes: ltiKey.notes
+                        // The LTI  key has the scopes on the tool_configuration and duplicating them here
+                        // causes errors when adding to Canvas.
                     }
                 }
             } else {
