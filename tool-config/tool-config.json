@@ -59,7 +59,6 @@
     }
   },
   "toolReg": {
-    "id": "b4337e6c-abdc-4274-8922-2891565f74d3",
     "lti": {
         "registrationId": "$LTI_REGISTRATION_ID",
         "clientName": "Pages - Banner Image$TITLE_SUFFIX",
