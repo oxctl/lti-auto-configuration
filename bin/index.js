@@ -16,6 +16,27 @@ const templateRegex = /\$([A-Z_]{2,})|\${([A-Z_]+)}/g;
 // Lazy-load config utilities after NODE_CONFIG_DIR has been updated for the chosen template.
 const loadConfig = async () => await import('../lib/config.js')
 
+/**
+ * Validates that we have the essential config set.
+ */
+const validateConfig = async () => {
+    const {checkDefined} = await loadConfig()
+    try {
+        const canvasUrl = checkDefined('canvas_url')
+        checkDefined('canvas_token')
+
+        const toolSupportUrl = checkDefined('tool_support_url')
+        checkDefined('tool_support_username')
+        checkDefined('tool_support_password')
+
+        console.error(`Canvas URL: ${canvasUrl}`)
+        console.error(`Tool Support URL: ${toolSupportUrl}`)
+    } catch (e) {
+        console.error('Configuration missing, please run `init`:' + e.message)
+        process.exit(1)
+    }
+}
+
 const [major, minor, patch] = process.versions.node.split('.').map(Number)
 if (major < 18) {
     console.error(`Requires Node 18 (or higher, ${major} found)`);
@@ -225,7 +246,7 @@ program
             setDefaultValues(jsonTemplate.config)
             setOverrides(options)
             
-            await validateConfig();
+            validateConfig();
 
             textTemplate = textTemplate.replace(templateRegex, ((match, rawName, wrappedName) => {
                 const name = (rawName || wrappedName).toLocaleLowerCase()
@@ -357,7 +378,7 @@ program
             // As we just need a registration ID  if there isn't a configuration file it's not a problem
             // as the value may have been passed in on the command line.
         }
-        await validateConfig();
+        validateConfig();
 
         // Just need this while replacing values, these are the default values.
 
@@ -443,7 +464,7 @@ program
         let jsonTemplate = JSON.parse(textTemplate)
         setOverrides(options)
         setDefaultValues(jsonTemplate.config)
-        await validateConfig();
+        validateConfig();
         textTemplate = textTemplate.replace(templateRegex, ((match, rawName, wrappedName) => {
             const name = (rawName || wrappedName).toLocaleLowerCase()
             if (ignoredValue(name)) {
@@ -591,7 +612,7 @@ program
         }
 
         setOverrides(options)
-        await validateConfig();
+        validateConfig();
         // Just need this while replacing values, these are the default values.
 
         const toolSupportUrl = lookupValue('tool_support_url')
@@ -677,7 +698,7 @@ program
             // As we just need a registration ID  if there isn't a configuration file it's not a problem
             // as the value may have been passed in on the command line.
         }
-        await validateConfig();
+        validateConfig();
 
         const toolSupportUrl = lookupValue('tool_support_url')
         const toolSupportUsername = lookupValue('tool_support_username')
@@ -768,7 +789,7 @@ program
             setDefaultValues(jsonTemplate.config)
         } catch (e) {
         }
-        await validateConfig()
+        validateConfig()
 
         const toolSupportUrl = lookupValue('tool_support_url')
         const toolSupportUsername = lookupValue('tool_support_username')
@@ -814,7 +835,7 @@ program
     .description('List the registrations on the tool support server')
     .action(async () => {
         const {validateConfig, lookupValue} = await loadConfig()
-        await validateConfig();
+        validateConfig();
 
         const toolSupportUrl = lookupValue('tool_support_url')
         const toolSupportUsername = lookupValue('tool_support_username')
