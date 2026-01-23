@@ -19,8 +19,8 @@ const loadConfig = async () => await import('../lib/config.js')
 /**
  * Validates that we have the essential config set.
  */
-const validateConfig = async () => {
-    const {checkDefined} = await loadConfig()
+const validateConfig = (configUtils) => {
+    const {checkDefined} = configUtils
     try {
         const canvasUrl = checkDefined('canvas_url')
         checkDefined('canvas_token')
@@ -232,7 +232,8 @@ program
     .option('-r, --lti-registration-id <ltiRegistrationId>', 'registration id to use')
     .action(async (options) => {
             updateConfigDirForTemplate(options.template)
-            const {setDefaultValues, setOverrides, lookupValue, ignoredValue, checkDefined, validateConfig} = await loadConfig()
+            const configUtils = await loadConfig()
+            const {setDefaultValues, setOverrides, lookupValue, ignoredValue, checkDefined} = configUtils
             
             let textTemplate
             try {
@@ -246,7 +247,7 @@ program
             setDefaultValues(jsonTemplate.config)
             setOverrides(options)
             
-            validateConfig();
+            validateConfig(configUtils);
 
             textTemplate = textTemplate.replace(templateRegex, ((match, rawName, wrappedName) => {
                 const name = (rawName || wrappedName).toLocaleLowerCase()
@@ -367,7 +368,8 @@ program
     .option('-n, --non-interactive', 'disable confirmation prompt')
     .action(async (options) => {
         updateConfigDirForTemplate(options.template)
-        const {setOverrides, setDefaultValues, validateConfig, lookupValue, checkDefined} = await loadConfig()
+        const configUtils = await loadConfig()
+        const {setOverrides, setDefaultValues, lookupValue, checkDefined} = configUtils
 
         setOverrides(options)
         try {
@@ -378,7 +380,7 @@ program
             // As we just need a registration ID  if there isn't a configuration file it's not a problem
             // as the value may have been passed in on the command line.
         }
-        validateConfig();
+        validateConfig(configUtils);
 
         // Just need this while replacing values, these are the default values.
 
@@ -450,7 +452,8 @@ program
     .option('-r, --lti-registration-id <ltiRegistrationId>', 'registration id to use')
     .action(async (options) => {
         updateConfigDirForTemplate(options.template)
-        const {setOverrides, setDefaultValues, lookupValue, ignoredValue, checkDefined, validateConfig} = await loadConfig()
+        const configUtils = await loadConfig()
+        const {setOverrides, setDefaultValues, lookupValue, ignoredValue, checkDefined} = configUtils
         
         let textTemplate
         try {
@@ -464,7 +467,7 @@ program
         let jsonTemplate = JSON.parse(textTemplate)
         setOverrides(options)
         setDefaultValues(jsonTemplate.config)
-        validateConfig();
+        validateConfig(configUtils);
         textTemplate = textTemplate.replace(templateRegex, ((match, rawName, wrappedName) => {
             const name = (rawName || wrappedName).toLocaleLowerCase()
             if (ignoredValue(name)) {
@@ -602,7 +605,8 @@ program
     .option('-r, --lti-registration-id <ltiRegistrationId>', 'registration id to use')
     .action(async (options) => {
         updateConfigDirForTemplate(options.template)
-        const {setDefaultValues, setOverrides, validateConfig, lookupValue, checkDefined} = await loadConfig()
+        const configUtils = await loadConfig()
+        const {setDefaultValues, setOverrides, lookupValue, checkDefined} = configUtils
         
         try {
             let textTemplate = fs.readFileSync(options.template, 'utf8');
@@ -612,7 +616,7 @@ program
         }
 
         setOverrides(options)
-        validateConfig();
+        validateConfig(configUtils);
         // Just need this while replacing values, these are the default values.
 
         const toolSupportUrl = lookupValue('tool_support_url')
@@ -687,7 +691,8 @@ program
     .option('-r, --lti-registration-id <ltiRegistrationId>', 'registration id to use')
     .action(async (options) => {
         updateConfigDirForTemplate(options.template)
-        const {setOverrides, setDefaultValues, validateConfig, lookupValue, checkDefined} = await loadConfig()
+        const configUtils = await loadConfig()
+        const {setOverrides, setDefaultValues, lookupValue, checkDefined} = configUtils
         
         setOverrides(options)
         try {
@@ -698,7 +703,7 @@ program
             // As we just need a registration ID  if there isn't a configuration file it's not a problem
             // as the value may have been passed in on the command line.
         }
-        validateConfig();
+        validateConfig(configUtils);
 
         const toolSupportUrl = lookupValue('tool_support_url')
         const toolSupportUsername = lookupValue('tool_support_username')
@@ -779,7 +784,8 @@ program
     .option('-r, --lti-registration-id <ltiRegistrationId>', 'registration id to use')
     .action(async (options) => {
         updateConfigDirForTemplate(options.template)
-        const {setOverrides, setDefaultValues, validateConfig, lookupValue, checkDefined} = await loadConfig()
+        const configUtils = await loadConfig()
+        const {setOverrides, setDefaultValues, lookupValue, checkDefined} = configUtils
         
         setOverrides(options)
         let textTemplate
@@ -789,7 +795,7 @@ program
             setDefaultValues(jsonTemplate.config)
         } catch (e) {
         }
-        validateConfig()
+        validateConfig(configUtils)
 
         const toolSupportUrl = lookupValue('tool_support_url')
         const toolSupportUsername = lookupValue('tool_support_username')
@@ -834,8 +840,9 @@ program
     .command('list')
     .description('List the registrations on the tool support server')
     .action(async () => {
-        const {validateConfig, lookupValue} = await loadConfig()
-        validateConfig();
+        const configUtils = await loadConfig()
+        const {lookupValue} = configUtils
+        validateConfig(configUtils);
 
         const toolSupportUrl = lookupValue('tool_support_url')
         const toolSupportUsername = lookupValue('tool_support_username')
