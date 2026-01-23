@@ -6,18 +6,36 @@ import fs from 'node:fs'
 import toolSupportCreate from '../lib/tool-support.js'
 import canvasCreate from '../lib/canvas.js'
 import {homedir} from "node:os";
-import {
-    checkDefined,
-    ignoredValue,
-    lookupValue,
-    setDefaultValues,
-    setOverrides,
-} from "../lib/config.js";
+import {updateConfigDirForTemplate} from '../lib/setup.js'
 
 import packageJson from '../package.json' with { type: 'json' }
 
 // The pattern to search for in templates when replacing values.
 const templateRegex = /\$([A-Z_]{2,})|\${([A-Z_]+)}/g;
+
+// Lazy-load config utilities after NODE_CONFIG_DIR has been updated for the chosen template.
+const loadConfig = async () => await import('../lib/config.js')
+
+/**
+ * Validates that we have the essential config set.
+ */
+const validateConfig = async () => {
+    const {checkDefined} = await loadConfig()
+    try {
+        const canvasUrl = checkDefined('canvas_url')
+        checkDefined('canvas_token')
+
+        const toolSupportUrl = checkDefined('tool_support_url')
+        checkDefined('tool_support_username')
+        checkDefined('tool_support_password')
+
+        console.error(`Canvas URL: ${canvasUrl}`)
+        console.error(`Tool Support URL: ${toolSupportUrl}`)
+    } catch (e) {
+        console.error('Configuration missing, please run `init`:' + e.message)
+        process.exit(1)
+    }
+}
 
 const [major, minor, patch] = process.versions.node.split('.').map(Number)
 if (major < 18) {
@@ -92,28 +110,6 @@ async function validateCanvasUrl(canvasUrl, canvasToken) {
     return false;
 }
 
-/**
- * Validates that we have the essential config set.
- */
-export const validateConfig = () => {
-    try {
-        const canvasUrl = checkDefined('canvas_url')
-        checkDefined('canvas_token')
-
-        const toolSupportUrl = checkDefined('tool_support_url')
-        checkDefined('tool_support_username')
-        checkDefined('tool_support_password')
-
-        console.error(`Canvas URL: ${canvasUrl}`)
-        console.error(`Tool Support URL: ${toolSupportUrl}`)
-    } catch (e) {
-        console.error('Configuration missing, please run `init`:' + e.message)
-        process.exit(1)
-    }
-}
-
-
-
 program
     .name('lti-config')
     // This is only defined when running through npm (npx) and not when running directly
@@ -174,7 +170,10 @@ program
     .command('setup [environment]')
     .description('Set additional values needed for this tool.')
     .option('-t, --template <template>', 'template to use', './tool-config/tool-config.json')
-    .action((environment, {template}) => {
+    .action(async (environment, {template}) => {
+        updateConfigDirForTemplate(template)
+        const {setDefaultValues, lookupValue, ignoredValue} = await loadConfig()
+        
         let textTemplate
         try {
             textTemplate = fs.readFileSync(template, 'utf8');
@@ -232,6 +231,9 @@ program
     .option('-t, --template <template>', 'template to use', './tool-config/tool-config.json')
     .option('-r, --lti-registration-id <ltiRegistrationId>', 'registration id to use')
     .action(async (options) => {
+            updateConfigDirForTemplate(options.template)
+            const {setDefaultValues, setOverrides, lookupValue, ignoredValue, checkDefined, validateConfig} = await loadConfig()
+            
             let textTemplate
             try {
                 textTemplate = fs.readFileSync(options.template, 'utf8');
@@ -364,6 +366,8 @@ program
     .option('-r, --lti-registration-id <ltiRegistrationId>', 'registration id to use')
     .option('-n, --non-interactive', 'disable confirmation prompt')
     .action(async (options) => {
+        updateConfigDirForTemplate(options.template)
+        const {setOverrides, setDefaultValues, validateConfig, lookupValue, checkDefined} = await loadConfig()
 
         setOverrides(options)
         try {
@@ -445,6 +449,9 @@ program
     .option('-t, --template <template>', 'template to use', './tool-config/tool-config.json')
     .option('-r, --lti-registration-id <ltiRegistrationId>', 'registration id to use')
     .action(async (options) => {
+        updateConfigDirForTemplate(options.template)
+        const {setOverrides, setDefaultValues, lookupValue, ignoredValue, checkDefined, validateConfig} = await loadConfig()
+        
         let textTemplate
         try {
             textTemplate = fs.readFileSync(options.template, 'utf8');
@@ -594,6 +601,9 @@ program
     .option('-t, --template <template>', 'template to use', './tool-config/tool-config.json')
     .option('-r, --lti-registration-id <ltiRegistrationId>', 'registration id to use')
     .action(async (options) => {
+        updateConfigDirForTemplate(options.template)
+        const {setDefaultValues, setOverrides, validateConfig, lookupValue, checkDefined} = await loadConfig()
+        
         try {
             let textTemplate = fs.readFileSync(options.template, 'utf8');
             const jsonTemplate = JSON.parse(textTemplate)
@@ -676,6 +686,9 @@ program
     .option('-t, --template <template>', 'template to use', './tool-config/tool-config.json')
     .option('-r, --lti-registration-id <ltiRegistrationId>', 'registration id to use')
     .action(async (options) => {
+        updateConfigDirForTemplate(options.template)
+        const {setOverrides, setDefaultValues, validateConfig, lookupValue, checkDefined} = await loadConfig()
+        
         setOverrides(options)
         try {
             let textTemplate = fs.readFileSync(options.template, 'utf8');
@@ -765,6 +778,9 @@ program
     .option('-t, --template <template>', 'template to use', './tool-config/tool-config.json')
     .option('-r, --lti-registration-id <ltiRegistrationId>', 'registration id to use')
     .action(async (options) => {
+        updateConfigDirForTemplate(options.template)
+        const {setOverrides, setDefaultValues, validateConfig, lookupValue, checkDefined} = await loadConfig()
+        
         setOverrides(options)
         let textTemplate
         try {
@@ -818,6 +834,7 @@ program
     .command('list')
     .description('List the registrations on the tool support server')
     .action(async () => {
+        const {validateConfig, lookupValue} = await loadConfig()
         validateConfig();
 
         const toolSupportUrl = lookupValue('tool_support_url')
