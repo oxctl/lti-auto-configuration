@@ -190,7 +190,9 @@ program
         console.log('Setting config'+ (environment ?` for environment: ${environment}`:'.'))
         
         const filename = environment ? `local-${environment}.json` : 'local.json'
-        const path = `./tool-config/${filename}`
+        // Use the same directory as the template
+        const templateDir = template.substring(0, template.lastIndexOf('/')) || './tool-config'
+        const path = `${templateDir}/${filename}`
         let existingConfig = {}
         if (fs.existsSync(path)) {
             try {
@@ -215,8 +217,8 @@ program
         }))
         if (Object.keys(localConfig).length) {
 
-            if (!fs.existsSync('tool-config')) {
-                fs.mkdirSync('tool-config')
+            if (!fs.existsSync(templateDir)) {
+                fs.mkdirSync(templateDir, { recursive: true })
             }
             fs.writeFileSync(path, JSON.stringify(localConfig, null, 4))
             console.log(`Written local config to ${path}`)
