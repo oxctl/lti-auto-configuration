@@ -3,6 +3,7 @@
 import promptSync from 'prompt-sync'
 import {program} from 'commander';
 import fs from 'node:fs'
+import path from 'node:path'
 import toolSupportCreate from '../lib/tool-support.js'
 import canvasCreate from '../lib/canvas.js'
 import {homedir} from "node:os";
@@ -191,15 +192,15 @@ program
         
         const filename = environment ? `local-${environment}.json` : 'local.json'
         // Use the same directory as the template
-        const templateDir = template.substring(0, template.lastIndexOf('/')) || './tool-config'
-        const path = `${templateDir}/${filename}`
+        const templateDir = path.dirname(template)
+        const configPath = path.join(templateDir, filename)
         let existingConfig = {}
-        if (fs.existsSync(path)) {
+        if (fs.existsSync(configPath)) {
             try {
-                console.log(`Loading config from ${path}`)
-                existingConfig = JSON.parse(fs.readFileSync(path, 'utf8'))
+                console.log(`Loading config from ${configPath}`)
+                existingConfig = JSON.parse(fs.readFileSync(configPath, 'utf8'))
             } catch (e) {
-                console.error(`Failed to read setup config ${path}. ${e.message}`)
+                console.error(`Failed to read setup config ${configPath}. ${e.message}`)
                 process.exit(1) 
             }
         }
@@ -220,8 +221,8 @@ program
             if (!fs.existsSync(templateDir)) {
                 fs.mkdirSync(templateDir, { recursive: true })
             }
-            fs.writeFileSync(path, JSON.stringify(localConfig, null, 4))
-            console.log(`Written local config to ${path}`)
+            fs.writeFileSync(configPath, JSON.stringify(localConfig, null, 4))
+            console.log(`Written local config to ${configPath}`)
         } else {
             console.log('No undefined parameters')
         }
