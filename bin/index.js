@@ -169,9 +169,9 @@ program
     })
 program
     .command('setup [environment]')
-    .description('Set additional values needed for this tool.')
+    .description('Set additional values needed for this tool, by default the NODE_ENV environmental variable will be used for the environment.')
     .option('-t, --template <template>', 'template to use', './tool-config/tool-config.json')
-    .action(async (environment, {template}) => {
+    .action(async (environment = process.env.NODE_ENV, {template}) => {
         updateConfigDirForTemplate(template)
         const {setDefaultValues, lookupValue, ignoredValue} = await loadConfig()
         
