@@ -56,12 +56,15 @@ If the tool has additional configuration it needs to prompt for then these value
 lti-config setup
 ```
 
-- `title_suffix` - This is some text to append to the name of the tool, if it's a developer deployment it's helpful to add your name here to distinguish between multiple copies of the same tool.
-- `frontend_url` - The URL that the frontend will be served from. e.g. `https://localhost:3000` when in development.
-- `backend_url` - The URL that the backend can be accessed at. e.g. `https://localhost:8443` when in development.
+The tool should always prompt for at least one value:
+
 - `lti_registration_id` - The ID that the tool is registered with in tool support. Needs to be unique. e.g. `cm-dev-matthew`
 
+It may prompt for others depending on what parameters are used in `tool-config.json`, for example:
 
+- `title_suffix` - Text to append to the tool name. For a developer deployment it's helpful to add your name to distinguish between multiple copies of the same tool.
+- `frontend_url` - The URL that the frontend is served from. e.g. `https://localhost:3000` when in development.
+- `backend_url` - The URL that the backend can be accessed at. e.g. `https://localhost:8443` when in development.
 
 ## Add Tool
 
