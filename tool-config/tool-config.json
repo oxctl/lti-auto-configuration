@@ -104,7 +104,6 @@
     "origins": [
         "$LTI_TOOL_URL"
     ],
-    "sign": true,
     "secret": null,
     "issuer": "${LTI_SERVER_URL}",
     "nrpsAllowedRoles": []
