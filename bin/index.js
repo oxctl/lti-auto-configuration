@@ -49,6 +49,26 @@ const promptFunc = promptSync({sigint: true})
 // Always trim the input, so we don't have to worry about trailing spaces.
 const prompt = (message, value, opts)=> promptFunc(message, value, opts).trim()
 
+/**
+ * Gets the LTI registration ID by client ID and unlocks it.
+ */
+const unlockLtiRegistrationByClientId = async (canvas, clientId) => {
+    try {
+        const canvasLtiRegistration = await canvas.getLtiRegistrationByClientId(clientId);
+        const canvasLtiRegistrationId = canvasLtiRegistration.id;
+        try {
+            await canvas.unlockLtiDeveloperKey(canvasLtiRegistrationId);
+            console.log(`LTI registration unlocked with id ${canvasLtiRegistrationId}`);
+        } catch (error) {
+            console.error(`Failed to unlock LTI registration: ${error.message}`);
+            throw error;
+        }
+    } catch (error) {
+        console.error(`Failed to get or unlock LTI registration: ${error.message}`);
+        throw error;
+    }
+}
+
 function shouldRetry() {
     const abort = prompt('Abort? [y/n] ')
     if (abort === 'y' || abort === 'Y') {
@@ -358,6 +378,8 @@ program
 
             // Finally we just need to add the LTI tool to the testing subaccount
             if (canvasAccountId !== 'none') {
+                // Unlock the LTI registration before adding to subaccount
+                await unlockLtiRegistrationByClientId(canvas, ltiDevId);
                 await canvas.addLtiToolToSubaccount(ltiDevId, canvasAccountId);
                 console.log(`LTI tool with id ${ltiDevId} added to the sub-account ${canvasAccountId} on ${canvasUrl}.`);
             }
@@ -595,6 +617,8 @@ program
             const localKeyId = (BigInt(canvasLtiKeyId) % BigInt("10000000000000")).toString()
             const ltiTool = ltiTools.find(tool => tool.developer_key_id === localKeyId || tool.developer_key_id === canvasLtiKeyId);
             if (!ltiTool) {
+                // Unlock the LTI registration before adding to subaccount
+                await unlockLtiRegistrationByClientId(canvas, ltiDevId);
                 await canvas.addLtiToolToSubaccount(ltiDevId, canvasAccountId);
                 console.log(`LTI tool with id ${ltiDevId} added to the sub-account ${canvasAccountId} on ${canvasUrl}.`);
             }
