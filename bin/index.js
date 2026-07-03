@@ -248,12 +248,214 @@ program
         }
     })
 
+/**
+ * Module-level logger. Commands switch log to stderr when running in JSON output mode.
+ */
+const logger = {
+    log: (...args) => console.log(...args),
+    warn: (...args) => console.warn(...args),
+    error: (...args) => console.error(...args)
+}
+
+/**
+ * Emits JSON summary when command is running in JSON output mode.
+ */
+function emitJsonSummary(jsonOutput, summary) {
+    if (jsonOutput) {
+        process.stdout.write(`${JSON.stringify(summary)}\n`)
+    }
+}
+
+/**
+ * Embeds JWK from public_jwk_url if running on localhost
+ */
+async function embedJwkIfLocalhost(toolSupportUrl, jsonTemplate) {
+    if (/(localhost)|(127.0.0.1)/.test(toolSupportUrl)) {
+        const jwkUrl = jsonTemplate.ltiKey?.tool_configuration?.settings?.public_jwk_url
+        if (jwkUrl) {
+            const jwks = await retrieveJwk(jwkUrl)
+            const publicJwk = jwks.keys[0]
+            delete jsonTemplate.ltiKey.tool_configuration.settings.public_jwk_url
+            jsonTemplate.ltiKey.tool_configuration.settings.public_jwk = publicJwk
+            logger.log(`Embedded key from ${jwkUrl} in LTI developer key`)
+        }
+    }
+}
+
+/**
+ * Replaces template variables with developer key IDs
+ */
+function replaceKeyIds(template, keyIds) {
+    const { ltiDevId, ltiDevApiKey, apiDevId, apiDevApiKey } = keyIds
+    return template.replace(templateRegex, (match, rawName, wrappedName) => {
+        const name = (rawName || wrappedName).toLocaleLowerCase()
+        switch (name) {
+            case 'lti_dev_id':
+                return ltiDevId || match
+            case 'lti_dev_key':
+                return ltiDevApiKey || match
+            case 'api_dev_id':
+                return apiDevId || match
+            case 'api_dev_key':
+                return apiDevApiKey || match
+            default:
+                return match
+        }
+    })
+}
+
+/**
+ * Updates a developer key (LTI or API) with error handling and logging
+ */
+async function updateDeveloperKey(canvas, keyType, keyId, keyConfig) {
+    try {
+        const method = keyType === 'lti' ? 'updateLtiDeveloperKey' : 'updateApiDeveloperKey'
+        await canvas[method](keyId, keyConfig)
+        logger.log(`${keyType === 'lti' ? 'LTI' : 'API'} developer key ${keyId} updated successfully`)
+        return true
+    } catch (error) {
+        logger.error(error)
+        return false
+    }
+}
+
+/**
+ * Handles API key lifecycle: create new, update existing, or delete if not in template
+ * Returns { apiDevId, apiDevApiKey, enableApiKey }
+ */
+async function handleApiKeyLifecycle(canvas, jsonTemplate, existingRegistration) {
+    const result = { apiDevId: null, apiDevApiKey: null, enableApiKey: false }
+    
+    if (jsonTemplate.apiKey) {
+        if (existingRegistration?.proxy) {
+            // Update existing API key
+            result.apiDevId = existingRegistration.proxy.clientId
+            result.apiDevApiKey = existingRegistration.proxy.clientSecret
+            logger.log(`Updating the API developer key ${result.apiDevId}...`)
+            await updateDeveloperKey(canvas, 'api', result.apiDevId, jsonTemplate.apiKey)
+        } else {
+            // Create new API key
+            const createdApiDevKey = await canvas.createApiDeveloperKey(jsonTemplate.apiKey)
+            result.apiDevId = createdApiDevKey.id
+            result.apiDevApiKey = createdApiDevKey.api_key
+            result.enableApiKey = true
+            logger.log(`API developer key created with id ${result.apiDevId}`)
+        }
+    } else {
+        if (existingRegistration?.proxy) {
+            // Delete API key
+            const canvasApiKeyToDelete = existingRegistration.proxy.clientId
+            logger.log(`Deleting the API developer key ${canvasApiKeyToDelete}...`)
+            try {
+                await canvas.deleteDeveloperKeyById(canvasApiKeyToDelete)
+                logger.log(`Developer key ${canvasApiKeyToDelete} deleted successfully`)
+            } catch (error) {
+                logger.error(`Failed to delete developer key ${canvasApiKeyToDelete}: ${error.message}`)
+            }
+        }
+    }
+    
+    return result
+}
+
+/**
+ * Adds or verifies LTI tool in subaccount
+ * Returns true if tool was added, false if already exists or skipped
+ */
+async function addOrVerifyLtiToolInSubaccount(canvas, ltiDevId, canvasLtiKeyId, canvasAccountId, canvasUrl) {
+    if (canvasAccountId === 'none') {
+        return { externalToolId: null }
+    }
+    
+    const ltiTools = await canvas.getLtiTools(canvasAccountId)
+    const localKeyId = (BigInt(canvasLtiKeyId) % BigInt("10000000000000")).toString()
+    const ltiTool = ltiTools.find(tool => tool.developer_key_id === localKeyId || tool.developer_key_id === canvasLtiKeyId)
+    
+    if (!ltiTool) {
+        await unlockLtiRegistrationByClientId(canvas, ltiDevId)
+        const createdLtiTool = await canvas.addLtiToolToSubaccount(ltiDevId, canvasAccountId)
+        logger.log(`LTI tool with id ${ltiDevId} added to the sub-account ${canvasAccountId} on ${canvasUrl}`)
+        return { externalToolId: createdLtiTool?.id || null }
+    }
+    return { externalToolId: ltiTool.id || null }
+}
+
+/**
+ * Common setup for create/update/deploy commands.
+ * Loads config, parses template, and returns all necessary objects and data.
+ */
+async function setupTemplateCommand(templatePath, options) {
+    updateConfigDirForTemplate(templatePath)
+    const configUtils = await loadConfig()
+    const {setDefaultValues, setOverrides, lookupValue, ignoredValue, checkDefined} = configUtils
+    
+    let originalTemplate
+    try {
+        originalTemplate = fs.readFileSync(templatePath, 'utf8')
+    } catch (e) {
+        console.error(`Failed to read template file ${templatePath}. ${e.message}`)
+        process.exit(1)
+    }
+    
+    let jsonTemplate = JSON.parse(originalTemplate)
+    setOverrides(options)
+    setDefaultValues(jsonTemplate.config)
+    validateConfig(configUtils)
+    
+    let processedTemplate = originalTemplate.replace(templateRegex, ((match, rawName, wrappedName) => {
+        const name = (rawName || wrappedName).toLocaleLowerCase()
+        if (ignoredValue(name)) {
+            return match
+        }
+        const value = lookupValue(name)
+        if (!value && value !== '') {
+            throw new Error(`No values defined for ${name}`)
+        }
+        return value
+    }))
+    
+    jsonTemplate = JSON.parse(processedTemplate)
+    
+    const toolSupportUrl = lookupValue('tool_support_url')
+    const toolSupportUsername = lookupValue('tool_support_username')
+    const toolSupportPassword = lookupValue('tool_support_password')
+    const toolSupport = toolSupportCreate(toolSupportUrl, toolSupportUsername, toolSupportPassword)
+    
+    const canvasUrl = lookupValue('canvas_url')
+    const canvasToken = lookupValue('canvas_token')
+    const canvasAccountId = lookupValue('canvas_account_id') || 'self'
+    const canvas = canvasCreate(canvasUrl, canvasToken)
+    
+    const ltiRegistrationId = checkDefined('lti_registration_id')
+    
+    return {
+        originalTemplate,
+        processedTemplate,
+        jsonTemplate,
+        configUtils,
+        toolSupport,
+        canvas,
+        toolSupportUrl,
+        canvasUrl,
+        canvasAccountId,
+        ltiRegistrationId,
+        lookupValue,
+        ignoredValue,
+        checkDefined
+    }
+}
+
 program
     .command('create')
     .description('Adds the configuration to tool support and Canvas')
     .option('-t, --template <template>', 'template to use', './tool-config/tool-config.json')
     .option('-r, --lti-registration-id <ltiRegistrationId>', 'registration id to use')
+    .option('-j, --json', 'output summary as JSON')
     .action(async (options) => {
+            const jsonOutput = !!options.json
+            if (jsonOutput) {
+                logger.log = (...args) => console.error(...args)
+            }
             updateConfigDirForTemplate(options.template)
             const configUtils = await loadConfig()
             const {setDefaultValues, setOverrides, lookupValue, ignoredValue, checkDefined} = configUtils
@@ -306,83 +508,60 @@ program
             }
             // TODO assert we have the right parts in the template
 
-            if (/(localhost)|(127.0.0.1)/.test(toolSupportUrl)) {
-                const jwkUrl = jsonTemplate.ltiKey.tool_configuration.settings.public_jwk_url
-                if (jwkUrl) {
-                    const jwks = await retrieveJwk(jwkUrl);
-                    const publicJwk = jwks.keys[0];
-                    delete jsonTemplate.ltiKey.tool_configuration.settings.public_jwk_url;
-                    jsonTemplate.ltiKey.tool_configuration.settings.public_jwk = publicJwk;
-                    console.log(`Embedded key from ${jwkUrl} in LTI developer key`);
-                }
-            }
-
+            await embedJwkIfLocalhost(toolSupportUrl, jsonTemplate)
 
             const createdLtiDevKey = await canvas.createLtiDeveloperKey(jsonTemplate.ltiKey)
             const ltiDevId = createdLtiDevKey.developer_key.id;
             // This is an unreadable ID
             const ltiDevApiKey = createdLtiDevKey.developer_key.api_key;
-            console.log(`LTI developer key created with id ${ltiDevId}`);
+            logger.log(`LTI developer key created with id ${ltiDevId}`);
 
-            textTemplate = textTemplate.replace(templateRegex, (match, rawName, wrappedName) => {
-                const name = (rawName || wrappedName).toLocaleLowerCase()
-                switch (name) {
-                    case 'lti_dev_id':
-                        return ltiDevId;
-                    case 'lti_dev_key':
-                        return ltiDevApiKey;
-                    default:
-                        return match;
-                }
-            })
+            textTemplate = replaceKeyIds(textTemplate, { ltiDevId, ltiDevApiKey })
             jsonTemplate = JSON.parse(textTemplate)
 
             let apiDevId, apiDevApiKey
             if (jsonTemplate.apiKey) {
-                if (jsonTemplate.toolReg.proxy) {
-                    const createdApiDevKey = await canvas.createApiDeveloperKey(jsonTemplate.apiKey);
-                    apiDevId = createdApiDevKey.id
-                    apiDevApiKey = createdApiDevKey.api_key
-                    console.log(`API developer key created with id ${apiDevId}`);
-                    textTemplate = textTemplate.replace(templateRegex, (match, rawName, wrappedName) => {
-                        const name = (rawName || wrappedName).toLocaleLowerCase()
-                        switch (name) {
-                            case 'api_dev_id':
-                                return apiDevId;
-                            case 'api_dev_key':
-                                return apiDevApiKey;
-                            default:
-                                return match;
-                        }
-                    })
-                    jsonTemplate = JSON.parse(textTemplate)
-                } else {
-                    // If we don't skip on creation then we end up leaving it on deletion.
-                    console.warn(`No API key in tool support registration`)
-                }
+               if (jsonTemplate.toolReg.proxy) {
+                   const createdApiDevKey = await canvas.createApiDeveloperKey(jsonTemplate.apiKey);
+                   apiDevId = createdApiDevKey.id
+                   apiDevApiKey = createdApiDevKey.api_key
+                   logger.log(`API developer key created with id ${apiDevId}`);
+                   textTemplate = replaceKeyIds(textTemplate, { ltiDevId, ltiDevApiKey, apiDevId, apiDevApiKey })
+                   jsonTemplate = JSON.parse(textTemplate)
+               } else {
+                   // If we don't skip on creation then we end up leaving it on deletion.
+                   logger.warn(`No API key in tool support registration`)
+               }
             }
 
             // Once the developer keys are enabled we can create the registrations in the LTI auth server.
             const toolSupportRegistration = await toolSupport.createLtiToolRegistration(jsonTemplate.toolReg);
             const toolSupportRegistrationId = toolSupportRegistration.id;
-            console.log(`Tool Support registration created with id ${toolSupportRegistrationId}`);
+            logger.log(`Tool Support registration created with id ${toolSupportRegistrationId}`);
 
             // Once we have the developer keys, we have to enable them.
             await canvas.enableDeveloperKey(ltiDevId);
-            console.log(`LTI developer key enabled with id ${ltiDevId}`);
+            logger.log(`LTI developer key enabled with id ${ltiDevId}`);
             if (jsonTemplate.apiKey && apiDevId) {
                 await canvas.enableDeveloperKey(apiDevId);
-                console.log(`API developer key enabled with id ${apiDevId}`);
+                logger.log(`API developer key enabled with id ${apiDevId}`);
             }
 
 
             // Finally we just need to add the LTI tool to the testing subaccount
-            if (canvasAccountId !== 'none') {
-                // Unlock the LTI registration before adding to subaccount
-                await unlockLtiRegistrationByClientId(canvas, ltiDevId);
-                await canvas.addLtiToolToSubaccount(ltiDevId, canvasAccountId);
-                console.log(`LTI tool with id ${ltiDevId} added to the sub-account ${canvasAccountId} on ${canvasUrl}.`);
-            }
+            const { externalToolId } = await addOrVerifyLtiToolInSubaccount(canvas, ltiDevId, ltiDevId, canvasAccountId, canvasUrl)
+            emitJsonSummary(jsonOutput, {
+                action: 'created',
+                ltiRegistrationId,
+                toolSupportRegistrationId,
+                developerKeys: {
+                    lti: { id: ltiDevId },
+                    api: { id: apiDevId || null }
+                },
+                externalTools: {
+                    lti: { id: externalToolId }
+                }
+            })
         }
     )
 program
@@ -475,7 +654,12 @@ program
     .description('Updates the the configuration in tool support and Canvas')
     .option('-t, --template <template>', 'template to use', './tool-config/tool-config.json')
     .option('-r, --lti-registration-id <ltiRegistrationId>', 'registration id to use')
+    .option('-j, --json', 'output summary as JSON')
     .action(async (options) => {
+        const jsonOutput = !!options.json
+        if (jsonOutput) {
+            logger.log = (...args) => console.error(...args)
+        }
         updateConfigDirForTemplate(options.template)
         const configUtils = await loadConfig()
         const {setOverrides, setDefaultValues, lookupValue, ignoredValue, checkDefined} = configUtils
@@ -525,27 +709,12 @@ program
             throw new Error(`A registration with id '${ltiRegistrationId}' does not exists, not updating anything.`);
         }
         const ltiToolRegistrationId = ltiToolRegistration.id;
-        console.log(`LTI registration for ${ltiRegistrationId} found with id ${ltiToolRegistrationId}`);
+        logger.log(`LTI registration for ${ltiRegistrationId} found with id ${ltiToolRegistrationId}`);
 
-        if (/(localhost)|(127.0.0.1)/.test(toolSupportUrl)) {
-            const jwkUrl = jsonTemplate.ltiKey.tool_configuration.settings.public_jwk_url
-            if (jwkUrl) {
-                const jwks = await retrieveJwk(jwkUrl);
-                const publicJwk = jwks.keys[0];
-                delete jsonTemplate.ltiKey.tool_configuration.settings.public_jwk_url;
-                jsonTemplate.ltiKey.tool_configuration.settings.public_jwk = publicJwk;
-                console.log(`Embedded key from ${jwkUrl} in LTI developer key`);
-            }
-        }
+        await embedJwkIfLocalhost(toolSupportUrl, jsonTemplate)
         const canvasLtiKeyExisting = ltiToolRegistration.lti.clientId;
-        console.log(`Updating the LTI developer key ${canvasLtiKeyExisting}...`);
-        try {
-            // Update the developer key from Canvas.
-            await canvas.updateLtiDeveloperKey(canvasLtiKeyExisting, jsonTemplate.ltiKey);
-            console.log(`Developer key ${canvasLtiKeyExisting} updated successfully.`);
-        } catch (error) {
-            console.log(error);
-        }
+        logger.log(`Updating the LTI developer key ${canvasLtiKeyExisting}...`);
+        await updateDeveloperKey(canvas, 'lti', canvasLtiKeyExisting, jsonTemplate.ltiKey)
 
         let ltiDevId, ltiDevApiKey;
         ltiDevId = ltiToolRegistration.lti.clientId;
@@ -553,75 +722,180 @@ program
         let apiDevId, apiDevApiKey;
         let enableApiKey = false;
 
-        // Add/Delete/Update
-        if (jsonTemplate.apiKey) {
-            if (ltiToolRegistration.proxy) {
-                // Need to update existing
-                apiDevId = ltiToolRegistration.proxy.clientId
-                apiDevApiKey = ltiToolRegistration.proxy.clientSecret
-                console.log(`Updating the API developer key ${apiDevId}....`);
-                // Update the developer key from Canvas.
-                await canvas.updateApiDeveloperKey(apiDevId, jsonTemplate.apiKey);
-                console.log(`Developer key ${apiDevId} updated successfully.`);
-            } else {
-                // Need to add it.
-                const createdApiDevKey = await canvas.createApiDeveloperKey(jsonTemplate.apiKey);
-                apiDevId = createdApiDevKey.id
-                apiDevApiKey = createdApiDevKey.api_key
-                console.log(`API developer key created with id ${apiDevId}`);
-                // Flag we need to enable the API key yet.
-                enableApiKey = true;
-            }
-        } else {
-            if (ltiToolRegistration.proxy) {
-                // Need to delete it then
-                const canvasApiKeyToDelete = ltiToolRegistration.proxy.clientId;
-                console.log(`Deleting the API developer key ${canvasApiKeyToDelete}....`);
-                // Delete the developer key from Canvas.
-                await canvas.deleteDeveloperKeyById(canvasApiKeyToDelete);
-                console.log(`Developer key ${canvasApiKeyToDelete} deleted successfully.`);
-            }
-        }
+        // Handle API key lifecycle (create, update, or delete)
+        const apiResult = await handleApiKeyLifecycle(canvas, jsonTemplate, ltiToolRegistration)
+        apiDevId = apiResult.apiDevId
+        apiDevApiKey = apiResult.apiDevApiKey
+        enableApiKey = apiResult.enableApiKey
 
-        textTemplate = textTemplate.replace(templateRegex, (match, rawName, wrappedName) => {
-            const name = (rawName || wrappedName).toLocaleLowerCase()
-            switch (name) {
-                case 'lti_dev_id':
-                    return ltiDevId;
-                case 'lti_dev_key':
-                    return ltiDevApiKey;
-                case 'api_dev_id':
-                    return apiDevId;
-                case 'api_dev_key':
-                    return apiDevApiKey;
-                default:
-                    return match;
-            }
-        })
+        textTemplate = replaceKeyIds(textTemplate, { ltiDevId, ltiDevApiKey, apiDevId, apiDevApiKey })
         jsonTemplate = JSON.parse(textTemplate)
         
         // Then update the tool registration 
         await toolSupport.updateLtiToolRegistration(ltiToolRegistrationId, jsonTemplate.toolReg);
-        console.log(`LTI registration ${ltiToolRegistrationId} updated successfully.`);
+        logger.log(`LTI registration ${ltiToolRegistrationId} updated successfully.`);
 
         if (enableApiKey) {
             // We added a new API key so now we've setup the tool support entry enable the key.
             await canvas.enableDeveloperKey(apiDevId);
-            console.log(`API developer key enabled with id ${apiDevId}`);
+            logger.log(`API developer key enabled with id ${apiDevId}`);
         }
 
-        if (canvasAccountId !== 'none') {
-            const ltiTools = await canvas.getLtiTools(canvasAccountId);
-            const canvasLtiKeyId = ltiToolRegistration.lti.clientId;
-            // For local tools the external tools API uses the shorter ID.
-            const localKeyId = (BigInt(canvasLtiKeyId) % BigInt("10000000000000")).toString()
-            const ltiTool = ltiTools.find(tool => tool.developer_key_id === localKeyId || tool.developer_key_id === canvasLtiKeyId);
-            if (!ltiTool) {
-                // Unlock the LTI registration before adding to subaccount
-                await unlockLtiRegistrationByClientId(canvas, ltiDevId);
-                await canvas.addLtiToolToSubaccount(ltiDevId, canvasAccountId);
-                console.log(`LTI tool with id ${ltiDevId} added to the sub-account ${canvasAccountId} on ${canvasUrl}.`);
+        const { externalToolId } = await addOrVerifyLtiToolInSubaccount(canvas, ltiDevId, ltiToolRegistration.lti.clientId, canvasAccountId, canvasUrl)
+        emitJsonSummary(jsonOutput, {
+            action: 'updated',
+            ltiRegistrationId,
+            toolSupportRegistrationId: ltiToolRegistrationId,
+            developerKeys: {
+                lti: { id: ltiDevId },
+                api: { id: apiDevId || null }
+            },
+            externalTools: {
+                lti: { id: externalToolId }
             }
+        })
+    })
+
+program
+    .command('deploy')
+    .description('Creates the configuration in tool support and Canvas if it doesn\'t exist, updates it if it does')
+    .option('-t, --template <template>', 'template to use', './tool-config/tool-config.json')
+    .option('-r, --lti-registration-id <ltiRegistrationId>', 'registration id to use')
+    .option('-j, --json', 'output summary as JSON')
+    .action(async (options) => {
+        const jsonOutput = !!options.json
+        if (jsonOutput) {
+            logger.log = (...args) => console.error(...args)
+        }
+        try {
+            const setup = await setupTemplateCommand(options.template, options)
+            const { processedTemplate, jsonTemplate, toolSupport, canvas, canvasUrl, canvasAccountId, ltiRegistrationId, lookupValue } = setup
+            
+            // Check if tool exists
+            const existingLtiToolRegistration = await toolSupport.getLtiToolRegistrationByRegistrationId(ltiRegistrationId)
+            
+            if (!existingLtiToolRegistration) {
+                // Tool doesn't exist - run CREATE logic
+                logger.log(`Tool registration '${ltiRegistrationId}' not found. Creating...`)
+                
+                await embedJwkIfLocalhost(lookupValue('tool_support_url'), jsonTemplate)
+                
+                // Create LTI developer key
+                const createdLtiDevKey = await canvas.createLtiDeveloperKey(jsonTemplate.ltiKey)
+                const ltiDevId = createdLtiDevKey.developer_key.id
+                const ltiDevApiKey = createdLtiDevKey.developer_key.api_key
+                logger.log(`LTI developer key created with id ${ltiDevId}`)
+                
+                // Update template with LTI key IDs
+                let updatedTemplate = replaceKeyIds(processedTemplate, { ltiDevId, ltiDevApiKey })
+                let updatedJsonTemplate = JSON.parse(updatedTemplate)
+                
+                // Handle API developer key if needed
+                let apiDevId, apiDevApiKey
+                if (updatedJsonTemplate.apiKey) {
+                    if (updatedJsonTemplate.toolReg.proxy) {
+                        const createdApiDevKey = await canvas.createApiDeveloperKey(updatedJsonTemplate.apiKey)
+                        apiDevId = createdApiDevKey.id
+                        apiDevApiKey = createdApiDevKey.api_key
+                        logger.log(`API developer key created with id ${apiDevId}`)
+                        updatedTemplate = replaceKeyIds(updatedTemplate, { ltiDevId, ltiDevApiKey, apiDevId, apiDevApiKey })
+                        updatedJsonTemplate = JSON.parse(updatedTemplate)
+                    } else {
+                        logger.warn(`No API key in tool support registration`)
+                    }
+                }
+                
+                // Create tool registration in tool support
+                const toolSupportRegistration = await toolSupport.createLtiToolRegistration(updatedJsonTemplate.toolReg)
+                const toolSupportRegistrationId = toolSupportRegistration.id
+                logger.log(`Tool Support registration created with id ${toolSupportRegistrationId}`)
+                
+                // Enable developer keys
+                await canvas.enableDeveloperKey(ltiDevId)
+                logger.log(`LTI developer key enabled with id ${ltiDevId}`)
+                if (updatedJsonTemplate.apiKey && apiDevId) {
+                    await canvas.enableDeveloperKey(apiDevId)
+                    logger.log(`API developer key enabled with id ${apiDevId}`)
+                }
+                
+                // Add LTI tool to subaccount
+                const { externalToolId } = await addOrVerifyLtiToolInSubaccount(canvas, ltiDevId, ltiDevId, canvasAccountId, canvasUrl)
+                
+                logger.log(`Successfully CREATED tool registration '${ltiRegistrationId}'`)
+                emitJsonSummary(jsonOutput, {
+                    action: 'created',
+                    ltiRegistrationId,
+                    toolSupportRegistrationId,
+                    developerKeys: {
+                        lti: { id: ltiDevId },
+                        api: { id: apiDevId || null }
+                    },
+                    externalTools: {
+                        lti: { id: externalToolId }
+                    }
+                })
+            } else {
+                // Tool exists - run UPDATE logic
+                logger.log(`Tool registration '${ltiRegistrationId}' found. Updating...`)
+                
+                const ltiToolRegistrationId = existingLtiToolRegistration.id
+                logger.log(`LTI registration for ${ltiRegistrationId} found with id ${ltiToolRegistrationId}`)
+                
+                await embedJwkIfLocalhost(lookupValue('tool_support_url'), jsonTemplate)
+                
+                // Update LTI developer key
+                const canvasLtiKeyExisting = existingLtiToolRegistration.lti.clientId
+                logger.log(`Updating the LTI developer key ${canvasLtiKeyExisting}...`)
+                await updateDeveloperKey(canvas, 'lti', canvasLtiKeyExisting, jsonTemplate.ltiKey)
+                
+                let ltiDevId = existingLtiToolRegistration.lti.clientId
+                let ltiDevApiKey = existingLtiToolRegistration.lti.clientSecret
+                let apiDevId, apiDevApiKey
+                let enableApiKey = false
+                
+                // Handle API key lifecycle (create, update, or delete)
+                const apiResult = await handleApiKeyLifecycle(canvas, jsonTemplate, existingLtiToolRegistration)
+                apiDevId = apiResult.apiDevId
+                apiDevApiKey = apiResult.apiDevApiKey
+                enableApiKey = apiResult.enableApiKey
+                
+                // Update template with key IDs
+                let updatedTemplate = replaceKeyIds(processedTemplate, { ltiDevId, ltiDevApiKey, apiDevId, apiDevApiKey })
+                let updatedJsonTemplate = JSON.parse(updatedTemplate)
+                
+                // Update tool registration in tool support
+                await toolSupport.updateLtiToolRegistration(ltiToolRegistrationId, updatedJsonTemplate.toolReg)
+                logger.log(`LTI registration ${ltiToolRegistrationId} updated successfully`)
+                
+                // Enable API key if it was just created
+                if (enableApiKey && apiDevId) {
+                    await canvas.enableDeveloperKey(apiDevId)
+                    logger.log(`API developer key enabled with id ${apiDevId}`)
+                }
+                
+                const { externalToolId } = await addOrVerifyLtiToolInSubaccount(canvas, ltiDevId, existingLtiToolRegistration.lti.clientId, canvasAccountId, canvasUrl)
+                
+                logger.log(`Successfully UPDATED tool registration '${ltiRegistrationId}'`)
+                emitJsonSummary(jsonOutput, {
+                    action: 'updated',
+                    ltiRegistrationId,
+                    toolSupportRegistrationId: ltiToolRegistrationId,
+                    developerKeys: {
+                        lti: { id: ltiDevId },
+                        api: { id: apiDevId || null }
+                    },
+                    externalTools: {
+                        lti: { id: externalToolId }
+                    }
+                })
+            }
+        } catch (error) {
+            if (jsonOutput) {
+                console.error(JSON.stringify({ error: error.message }))
+            } else {
+                console.error(`Deploy failed: ${error.message}`)
+            }
+            process.exit(1)
         }
     })
 
