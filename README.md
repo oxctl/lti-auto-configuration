@@ -110,6 +110,12 @@ If you have previously deployed a tool then it can be helpful to check that the 
 lti-config validate
 ```
 
+To receive a machine-readable summary, use:
+
+```bash
+lti-config validate --json
+```
+
 This command will run the following actions
 
 1. Gets the LTI registration from tool support by the registration id.
