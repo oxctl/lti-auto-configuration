@@ -904,7 +904,12 @@ program
     .description('Checks that the configuration is in tool support and Canvas')
     .option('-t, --template <template>', 'template to use', './tool-config/tool-config.json')
     .option('-r, --lti-registration-id <ltiRegistrationId>', 'registration id to use')
+    .option('-j, --json', 'output summary as JSON')
     .action(async (options) => {
+        const jsonOutput = !!options.json
+        if (jsonOutput) {
+            logger.log = (...args) => console.error(...args)
+        }
         updateConfigDirForTemplate(options.template)
         const configUtils = await loadConfig()
         const {setDefaultValues, setOverrides, lookupValue, checkDefined} = configUtils
@@ -935,15 +940,21 @@ program
         
         const ltiToolRegistration = await toolSupport.getLtiToolRegistrationByRegistrationId(ltiRegistrationId);
         if (!ltiToolRegistration) {
-            console.error(`Error: A registration with id '${ltiRegistrationId}' does not exists.`);
+            const message = `A registration with id '${ltiRegistrationId}' does not exists.`
+            logger.error(`Error: ${message}`);
+            if (jsonOutput) {
+                emitJsonSummary(jsonOutput, { error: message })
+            }
             process.exit(1)
         }
 
         const ltiToolRegistrationId = ltiToolRegistration.id;
-        console.log(`LTI registration for ${ltiRegistrationId} found with id ${ltiToolRegistrationId}`);
+        logger.log(`LTI registration for ${ltiRegistrationId} found with id ${ltiToolRegistrationId}`);
 
         const hasLtiKey = ltiToolRegistration.lti !== null;
         const hasProxyKey = ltiToolRegistration.proxy !== null;
+        let hasLtiTool = null
+        let ltiExternalToolId = null
         
         const developerKeys = await canvas.getDevKeys();
         let hasError = false
@@ -951,21 +962,24 @@ program
             const canvasLtiKeyId = ltiToolRegistration.lti.clientId;
             const ltiKey = developerKeys.find(key => key.id === canvasLtiKeyId);
             if (ltiKey) {
-                console.log(`Found LTI developer key ${canvasLtiKeyId}`)
+                logger.log(`Found LTI developer key ${canvasLtiKeyId}`)
                 if (canvasAccountId !== 'none') {
                     const ltiTools = await canvas.getLtiTools(canvasAccountId);
                     // For local tools the external tools API uses the shorter ID.
                     const localKeyId = (BigInt(canvasLtiKeyId) % BigInt("10000000000000")).toString()
                     const ltiTool = ltiTools.find(tool => tool.developer_key_id === localKeyId || tool.developer_key_id === canvasLtiKeyId);
                     if (ltiTool) {
-                        console.info(`LTI tool ${ltiTool.id} found with developer key ${canvasLtiKeyId} in account ${canvasAccountId}`)
+                        hasLtiTool = true
+                        ltiExternalToolId = ltiTool.id
+                        logger.log(`LTI tool ${ltiTool.id} found with developer key ${canvasLtiKeyId} in account ${canvasAccountId}`)
                     } else {
-                        console.warn(`Warning: Can't find LTI tool for developer key ${canvasLtiKeyId} in account ${canvasAccountId}`)
+                        hasLtiTool = false
+                        logger.warn(`Warning: Can't find LTI tool for developer key ${canvasLtiKeyId} in account ${canvasAccountId}`)
                         hasError = true
                     }
                 }
             } else {
-                console.warn(`Warning: Can't find LTI developer key ${canvasLtiKeyId}`)
+                logger.warn(`Warning: Can't find LTI developer key ${canvasLtiKeyId}`)
                 hasError = true
             }
         }
@@ -974,12 +988,26 @@ program
             const canvasProxyKeyId = ltiToolRegistration.proxy.clientId;
             const proxyKey = developerKeys.find(key => key.id === canvasProxyKeyId);
             if (proxyKey) {
-                console.log(`Found API developer key ${canvasProxyKeyId}`)
+                logger.log(`Found API developer key ${canvasProxyKeyId}`)
             } else {
-                console.warn(`Warning: Can't find API developer key ${canvasProxyKeyId}`)
+                logger.warn(`Warning: Can't find API developer key ${canvasProxyKeyId}`)
                 hasError = true
             }
         }
+
+        emitJsonSummary(jsonOutput, {
+            action: 'validated',
+            ltiRegistrationId,
+            toolSupportRegistrationId: ltiToolRegistrationId,
+            developerKeys: {
+                lti: { id: hasLtiKey ? ltiToolRegistration.lti.clientId : null },
+                api: { id: hasProxyKey ? ltiToolRegistration.proxy.clientId : null }
+            },
+            externalTools: {
+                lti: { id: (hasLtiKey && canvasAccountId !== 'none' && hasLtiTool) ? ltiExternalToolId : null }
+            }
+        })
+
         if (hasError) {
             process.exit(1)
         }
