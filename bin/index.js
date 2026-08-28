@@ -47,7 +47,11 @@ if (major < 18) {
 // Allow ^C to interrupt
 const promptFunc = promptSync({sigint: true})
 // Always trim the input, so we don't have to worry about trailing spaces.
-const prompt = (message, value, opts)=> promptFunc(message, value, opts).trim()
+// Write prompt messages to stderr so interactive prompts appear on stderr, not stdout.
+const prompt = (message, value, opts) => {
+    if (message) process.stderr.write(message)
+    return promptFunc('', value, opts).trim()
+}
 
 /**
  * Gets the LTI registration ID by client ID and unlocks it.
